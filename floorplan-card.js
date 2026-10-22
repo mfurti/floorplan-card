@@ -7,7 +7,7 @@
  * License: MIT
  */
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 const STRINGS = {
   en: {
@@ -200,6 +200,7 @@ class FloorplanCard extends HTMLElement {
     }
     const click = rad.entity ? ` data-action="radiator" data-index="${i}"` : "";
     return `<g class="radiator ${s}"${click}><title>${esc(title)}</title>
+      <rect class="hit" x="${rx - 6}" y="${ry - 6}" width="${rw + 12}" height="${rh + 12}"/>
       <rect class="body" x="${rx}" y="${ry}" width="${rw}" height="${rh}" rx="2"/>
       <line class="fins" x1="${vertical ? x1 : rx + 3}" y1="${vertical ? ry + 3 : y1}" x2="${vertical ? x1 : rx + rw - 3}" y2="${vertical ? ry + rh - 3 : y1}"/></g>`;
   }
@@ -264,7 +265,7 @@ class FloorplanCard extends HTMLElement {
       <ha-card${c.title ? ` header="${esc(c.title)}"` : ""}>
         <div class="plan" style="aspect-ratio:${vw} / ${vh}">
           <svg viewBox="${vx} ${vy} ${vw} ${vh}" role="img" aria-label="${esc(c.title || "Floorplan")}">
-            ${rooms}${radiators}${doors}${windows}${labels}
+            ${rooms}${doors}${windows}${radiators}${labels}
           </svg>
           <div class="overlay">${elements}</div>
         </div>
@@ -346,7 +347,9 @@ FloorplanCard.styles = `
   .small { fill: var(--fp-text-small); font-size: 13px; font-weight: 500; }
   .window .frame { stroke: var(--fp-window); stroke-width: 8; transition: stroke .3s; }
   .window .glass { stroke: var(--fp-room); stroke-width: 2; }
-  .window .hit { stroke: transparent; stroke-width: 24; }
+  .window .hit { stroke: transparent; stroke-width: 16; }
+  .window:not([data-action]) .hit { pointer-events: none; }
+  .radiator .hit { fill: transparent; }
   .window.open .frame { stroke: var(--fp-window-open); animation: fp-pulse 1.6s ease-in-out infinite; }
   .window.closed .frame { stroke: var(--fp-window-closed); }
   .window.unknown .frame { stroke: var(--fp-window-unknown); }
