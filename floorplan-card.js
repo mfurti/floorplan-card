@@ -8,7 +8,7 @@
  * License: MIT
  */
 
-const VERSION = "0.6.3";
+const VERSION = "0.7.3";
 
 const STRINGS = {
   en: {
@@ -20,7 +20,7 @@ const STRINGS = {
     off: "off",
     confirm: "Are you sure?",
     no_rooms: "Please define at least one room under 'rooms'.",
-    bad_points: "Room '{name}' needs 'points' (at least 3) or 'rect' [x1, y1, x2, y2].",
+    bad_points: "Room '{name}' needs 'points' (at least 3), 'rect' or 'ellipse' [x1, y1, x2, y2].",
     bad_line: "{kind} #{n} needs 'from' and 'to' as [x, y].",
     bad_door: "Door #{n} needs 'hinge' and 'to' as [x, y].",
     bad_element: "Element #{n} needs 'position' [x, y].",
@@ -32,6 +32,13 @@ const STRINGS = {
     tool_select: "Select",
     tool_room_rect: "Rectangle",
     tool_room_poly: "Polygon",
+    tool_room_ellipse: "Circle",
+    tool_fillet: "Round",
+    tool_arc: "Arc wall",
+    panel_modify: "Modify",
+    radius: "Radius",
+    corner_radius: "Corner radius (all corners)",
+    corner_radius_mixed: "different per corner",
     tool_window: "Window",
     tool_door: "Door",
     tool_radiator: "Radiator",
@@ -55,13 +62,15 @@ const STRINGS = {
     delete: "Delete",
     fullscreen: "Full screen",
     save: "Save",
+    saved: "Saved",
+    save_failed: "Not saved",
     finish: "Finish room",
     cancel: "Cancel",
     grid: "Grid",
     ortho: "Ortho",
     ortho_title: "Right angles: walls only horizontal or vertical",
     wall_snap: "Wall snap",
-    wall_snap_title: "Windows, doors and radiators always sit on the nearest wall",
+    wall_snap_title: "Windows, doors and radiators always sit on the nearest wall, stairs fit flush against walls",
     hint_select: "Click an object to select it, drag to move it. Drag on empty space to select several objects (Shift adds).",
     header_draw: "Draw",
     zoom_in: "Zoom in",
@@ -71,6 +80,10 @@ const STRINGS = {
     nav_hint: "Wheel: zoom · middle button or space + drag: pan · right click / Esc: cancel",
     "hint_room-rect": "Click one corner of the room, then the opposite corner.",
     "hint_room-poly": "Click the corners one after another. Click the first corner again (or Enter) to close the room.",
+    "hint_room-ellipse": "Click one corner of the surrounding box, then the opposite corner. Hold Shift for a circle.",
+    hint_fillet: "Set the radius, then click the corners to round. Radius 0 makes a corner square again.",
+    hint_arc: "Click the wall that should be bent.",
+    hint_arc2: "Move the mouse to bend the wall and click. Back onto the straight line makes it straight again.",
     hint_window: "Click the start and the end of the window on the wall.",
     hint_door: "1st click: side with the hinge. 2nd click: other end of the opening. 3rd click: the side the door opens to.",
     hint_door3: "Move the mouse to the side the door should open to and click.",
@@ -116,7 +129,7 @@ const STRINGS = {
     off: "aus",
     confirm: "Bist du sicher?",
     no_rooms: "Bitte unter 'rooms' mindestens einen Raum angeben.",
-    bad_points: "Raum '{name}' braucht 'points' (mindestens 3) oder 'rect' [x1, y1, x2, y2].",
+    bad_points: "Raum '{name}' braucht 'points' (mindestens 3), 'rect' oder 'ellipse' [x1, y1, x2, y2].",
     bad_line: "{kind} Nr. {n} braucht 'from' und 'to' als [x, y].",
     bad_door: "Tür Nr. {n} braucht 'hinge' und 'to' als [x, y].",
     bad_element: "Element Nr. {n} braucht 'position' [x, y].",
@@ -127,6 +140,13 @@ const STRINGS = {
     tool_select: "Auswählen",
     tool_room_rect: "Rechteck",
     tool_room_poly: "Vieleck",
+    tool_room_ellipse: "Kreis",
+    tool_fillet: "Abrunden",
+    tool_arc: "Bogenwand",
+    panel_modify: "Ändern",
+    radius: "Radius",
+    corner_radius: "Eckenradius (alle Ecken)",
+    corner_radius_mixed: "je Ecke verschieden",
     tool_window: "Fenster",
     tool_door: "Tür",
     tool_radiator: "Heizkörper",
@@ -150,13 +170,15 @@ const STRINGS = {
     delete: "Löschen",
     fullscreen: "Vollbild",
     save: "Speichern",
+    saved: "Gespeichert",
+    save_failed: "Nicht gespeichert",
     finish: "Raum fertig",
     cancel: "Abbrechen",
     grid: "Raster",
     ortho: "Ortho",
     ortho_title: "Rechtwinklig: Wände nur waagrecht oder senkrecht",
     wall_snap: "Wandfang",
-    wall_snap_title: "Fenster, Türen und Heizkörper sitzen immer an der nächsten Wand",
+    wall_snap_title: "Fenster, Türen und Heizkörper sitzen immer an der nächsten Wand, Treppen schließen bündig an Wände an",
     hint_select: "Objekt anklicken zum Auswählen, ziehen zum Verschieben. Auf freier Fläche ziehen wählt mehrere Objekte aus (Umschalt: hinzufügen).",
     header_draw: "Zeichnen",
     zoom_in: "Vergrößern",
@@ -166,6 +188,10 @@ const STRINGS = {
     nav_hint: "Mausrad: zoomen · Mitteltaste oder Leertaste + ziehen: verschieben · Rechtsklick / Esc: abbrechen",
     "hint_room-rect": "Eine Ecke des Raums anklicken, dann die gegenüberliegende Ecke.",
     "hint_room-poly": "Die Ecken nacheinander anklicken. Zum Schließen wieder die erste Ecke anklicken (oder Enter).",
+    "hint_room-ellipse": "Eine Ecke des umgebenden Rechtecks anklicken, dann die gegenüberliegende. Mit Umschalt wird es ein Kreis.",
+    hint_fillet: "Radius einstellen, dann die Ecken anklicken, die rund werden sollen. Radius 0 macht eine Ecke wieder eckig.",
+    hint_arc: "Die Wand anklicken, die gebogen werden soll.",
+    hint_arc2: "Maus bewegen, bis der Bogen passt, dann klicken. Zurück auf die gerade Linie macht die Wand wieder gerade.",
     hint_window: "Anfang und Ende des Fensters auf der Wand anklicken.",
     hint_door: "1. Klick: Seite mit der Angel. 2. Klick: anderes Ende der Öffnung. 3. Klick: auf die Seite, in die die Tür aufgeht.",
     hint_door3: "Maus auf die Seite bewegen, in die die Tür aufgehen soll, und klicken.",
@@ -229,14 +255,119 @@ const roomPoints = (room) => {
   return room.points;
 };
 
+const fmt = (p) => `${Math.round(p[0] * 1e4) / 1e4} ${Math.round(p[1] * 1e4) / 1e4}`;
+
+// Circle through start a, a point m on the arc and end b; "span" is signed (positive = clockwise on screen).
+const arcThrough = (a, m, b) => {
+  const [[ax, ay], [mx, my], [bx, by]] = [a, m, b];
+  const d = 2 * (ax * (my - by) + mx * (by - ay) + bx * (ay - my));
+  if (Math.abs(d) < 1e-12) return null;
+  const [sa, sm, sb] = [ax * ax + ay * ay, mx * mx + my * my, bx * bx + by * by];
+  const c = [(sa * (my - by) + sm * (by - ay) + sb * (ay - my)) / d, (sa * (bx - mx) + sm * (ax - bx) + sb * (mx - ax)) / d];
+  const angle = (p) => Math.atan2(p[1] - c[1], p[0] - c[0]);
+  const turn = (x) => ((x % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  const a0 = angle(a);
+  const [dm, db] = [turn(angle(m) - a0), turn(angle(b) - a0)];
+  return { c, r: Math.hypot(ax - c[0], ay - c[1]), a0, span: dm < db ? db : db - 2 * Math.PI };
+};
+const arcSvg = (arc, b) => `A${Math.round(arc.r * 1e4) / 1e4} ${Math.round(arc.r * 1e4) / 1e4} 0 ${Math.abs(arc.span) > Math.PI ? 1 : 0} ${arc.span > 0 ? 1 : 0} ${fmt(b)}`;
+const arcSample = (arc) => {
+  const n = 2 * Math.max(1, Math.ceil(Math.abs(arc.span) * 4)); // even, so the middle of the arc is a point
+  return Array.from({ length: n + 1 }, (_, k) => {
+    const t = arc.a0 + (arc.span * k) / n;
+    return [arc.c[0] + arc.r * Math.cos(t), arc.c[1] + arc.r * Math.sin(t)];
+  });
+};
+
+// Wall i runs from corner i to corner i+1. "arcs[i]" bends it: the arc's middle lies that far from the straight
+// line, positive to the left (seen from corner i). The returned point m is the middle of the (bent) wall.
+const wallFrame = (pts, i, s = 0) => {
+  const [a, b] = [pts[i], pts[(i + 1) % pts.length]];
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+  const n = [(b[1] - a[1]) / len, -(b[0] - a[0]) / len];
+  const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  return { a, b, mid, n, m: [mid[0] + n[0] * s, mid[1] + n[1] * s] };
+};
+
+// Rounded corner i of a polygon with radius r (shortened if the walls are too short).
+const filletAt = (pts, i, r) => {
+  const n = pts.length;
+  const [prev, p, next] = [pts[(i - 1 + n) % n], pts[i], pts[(i + 1) % n]];
+  const l1 = Math.hypot(p[0] - prev[0], p[1] - prev[1]);
+  const l2 = Math.hypot(next[0] - p[0], next[1] - p[1]);
+  if (!(r > 0) || !l1 || !l2) return null;
+  const d1 = [(p[0] - prev[0]) / l1, (p[1] - prev[1]) / l1];
+  const d2 = [(next[0] - p[0]) / l2, (next[1] - p[1]) / l2];
+  const cross = d1[0] * d2[1] - d1[1] * d2[0];
+  if (Math.abs(cross) < 1e-9) return null;
+  const tanHalf = Math.tan(Math.atan2(Math.abs(cross), d1[0] * d2[0] + d1[1] * d2[1]) / 2);
+  const t = Math.min(r * tanHalf, Math.min(l1, l2) / 2);
+  const rr = t / tanHalf;
+  const t1 = [p[0] - d1[0] * t, p[1] - d1[1] * t];
+  const t2 = [p[0] + d2[0] * t, p[1] + d2[1] * t];
+  const side = cross > 0 ? [-d1[1], d1[0]] : [d1[1], -d1[0]];
+  const c = [t1[0] + side[0] * rr, t1[1] + side[1] * rr];
+  const dc = Math.hypot(p[0] - c[0], p[1] - c[1]) || 1;
+  return { t1, t2, m: [c[0] + ((p[0] - c[0]) / dc) * rr, c[1] + ((p[1] - c[1]) / dc) * rr] };
+};
+
+/**
+ * Outline of a room: SVG path, a polygon approximation (for hit tests and bounds) and its pieces
+ * (straight walls, arc walls, rounded corners) for wall snap. Null if the room is invalid.
+ * Rooms are "rect", "points" or "ellipse" [x1, y1, x2, y2]; "radius"/"radii" round corners, "arcs" bend walls.
+ */
+const roomGeometry = (room) => {
+  if (isRect(room.ellipse)) {
+    const [x1, y1, x2, y2] = normRect(room.ellipse);
+    const [cx, cy, rx, ry] = [(x1 + x2) / 2, (y1 + y2) / 2, (x2 - x1) / 2, (y2 - y1) / 2];
+    if (!rx || !ry) return null;
+    const outline = Array.from({ length: 64 }, (_, k) => [cx + rx * Math.cos((k * Math.PI) / 32), cy + ry * Math.sin((k * Math.PI) / 32)]);
+    return {
+      d: `M${x1} ${cy} A${rx} ${ry} 0 1 1 ${x2} ${cy} A${rx} ${ry} 0 1 1 ${x1} ${cy} Z`,
+      outline,
+      pieces: [{ pts: [...outline, outline[0]] }],
+    };
+  }
+  const pts = roomPoints(room);
+  if (!Array.isArray(pts) || pts.length < 3 || !pts.every(isPoint)) return null;
+  const n = pts.length;
+  const sag = (i) => Number(room.arcs?.[(i + n) % n]) || 0;
+  // Corners next to an arc wall stay sharp.
+  const fil = pts.map((_, i) => (sag(i) || sag(i - 1) ? null : filletAt(pts, i, Number(room.radii?.[i] ?? room.radius) || 0)));
+  const start = (i) => fil[i]?.t2 || pts[i];
+  const end = (i) => fil[(i + 1) % n]?.t1 || pts[(i + 1) % n];
+  let d = `M${fmt(start(0))}`;
+  const pieces = [];
+  for (let i = 0; i < n; i++) {
+    const [a, b] = [start(i), end(i)];
+    const arc = sag(i) ? arcThrough(a, wallFrame(pts, i, sag(i)).m, b) : null;
+    d += arc ? arcSvg(arc, b) : `L${fmt(b)}`;
+    pieces.push({ pts: arc ? arcSample(arc) : [a, b], edge: i });
+    const f = fil[(i + 1) % n];
+    const corner = f && arcThrough(f.t1, f.m, f.t2);
+    if (corner) {
+      d += arcSvg(corner, f.t2);
+      pieces.push({ pts: arcSample(corner), corner: (i + 1) % n });
+    }
+  }
+  return { d: `${d}Z`, outline: pieces.flatMap((p) => p.pts.slice(0, -1)), pieces };
+};
+
 const bbox = (points) => {
   const xs = points.map((p) => p[0]);
   const ys = points.map((p) => p[1]);
   return { x1: Math.min(...xs), y1: Math.min(...ys), x2: Math.max(...xs), y2: Math.max(...ys) };
 };
 
+// Where the room name goes: "label_position" or the middle of the room.
+const roomCenter = (room) => {
+  if (room.label_position) return room.label_position;
+  const b = bbox(roomGeometry(room)?.outline || [[0, 0]]);
+  return [(b.x1 + b.x2) / 2, (b.y1 + b.y2) / 2];
+};
+
 const allPoints = (config) => {
-  const all = (config.rooms || []).flatMap((r) => roomPoints(r) || []);
+  const all = (config.rooms || []).flatMap((r) => roomGeometry(r)?.outline || []);
   for (const list of [config.windows, config.radiators]) (list || []).forEach((i) => all.push(i.from, i.to));
   (config.doors || []).forEach((d) => all.push(d.hinge, d.to));
   (config.stairs || []).forEach((s) => isRect(s.rect) && all.push(s.rect.slice(0, 2), s.rect.slice(2)));
@@ -363,15 +494,16 @@ const planMarkup = (config, hass, vb, language) => {
 
   const rooms = (config.rooms || [])
     .map((room, i) => {
-      const pts = roomPoints(room);
-      if (!Array.isArray(pts) || pts.length < 3) return "";
-      const b = bbox(pts);
+      const geo = roomGeometry(room);
+      if (!geo) return "";
       const kind = ["outdoor", "zone"].includes(room.type) ? room.type : "room";
       const active = room.entity && ACTIVE_STATES.has(st(room.entity)?.state) ? " active" : "";
       const click = room.tap_action || room.navigation_path || room.entity ? ` data-action="room" data-index="${i}"` : "";
-      return kind === "zone" && room.rect
-        ? `<rect class="${kind}${active}"${click} x="${b.x1}" y="${b.y1}" width="${b.x2 - b.x1}" height="${b.y2 - b.y1}" rx="${8 * u}"/>`
-        : `<polygon class="${kind}${active}"${click} points="${pts.map((p) => p.join(",")).join(" ")}"/>`;
+      if (kind === "zone" && isRect(room.rect) && !room.radius && !room.radii && !room.arcs) {
+        const [x1, y1, x2, y2] = normRect(room.rect);
+        return `<rect class="${kind}${active}"${click} x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="${8 * u}"/>`;
+      }
+      return `<path class="${kind}${active}"${click} d="${geo.d}"/>`;
     })
     .join("");
 
@@ -428,10 +560,8 @@ const planMarkup = (config, hass, vb, language) => {
     .join("");
 
   const roomLabels = (config.rooms || []).map((room) => {
-    const pts = roomPoints(room);
-    if (room.label === false || !room.name || !Array.isArray(pts) || pts.length < 3) return "";
-    const b = bbox(pts);
-    const [x, y] = room.label_position || [(b.x1 + b.x2) / 2, (b.y1 + b.y2) / 2];
+    if (room.label === false || !room.name || !roomGeometry(room)) return "";
+    const [x, y] = roomCenter(room);
     const size = room.label_size === "small" || room.type === "zone" ? "small" : "name";
     return `<text class="${size}" x="${x}" y="${y}">${esc(room.name)}</text>`;
   });
@@ -519,8 +649,7 @@ class FloorplanCard extends HTMLElement {
     const lang = langOf(this._hass);
     if (!Array.isArray(config.rooms) || config.rooms.length === 0) throw new Error(t("no_rooms", {}, lang));
     config.rooms.forEach((room) => {
-      const pts = roomPoints(room);
-      if (!Array.isArray(pts) || pts.length < 3 || !pts.every(isPoint)) throw new Error(t("bad_points", { name: room.name ?? "?" }, lang));
+      if (!roomGeometry(room)) throw new Error(t("bad_points", { name: room.name ?? "?" }, lang));
     });
     for (const [kind, list] of [["Window", config.windows], ["Radiator", config.radiators]]) {
       (list || []).forEach((item, i) => {
@@ -672,10 +801,16 @@ const ENTITY_DOMAINS = {
   element: null,
 };
 // Ribbon like in CAD programs: tabs → panels → buttons.
-// ["tool", mode, icon, label] picks a drawing tool, ["cmd", command, icon, label] runs a command.
+// ["tool", mode, icon, label] picks a drawing tool, ["cmd", command, icon, label] runs a command,
+// ["field", "radius"] is the radius input for rounding corners.
 const RIBBON = [
   ["tab_draw", [
-    ["panel_rooms", [["tool", "room-rect", "mdi:square-outline", "tool_room_rect"], ["tool", "room-poly", "mdi:vector-polygon", "tool_room_poly"]]],
+    ["panel_rooms", [
+      ["tool", "room-rect", "mdi:square-outline", "tool_room_rect"],
+      ["tool", "room-poly", "mdi:vector-polygon", "tool_room_poly"],
+      ["tool", "room-ellipse", "mdi:circle-outline", "tool_room_ellipse"],
+    ]],
+    ["panel_modify", [["tool", "fillet", "mdi:rounded-corner", "tool_fillet"], ["tool", "arc", "mdi:vector-curve", "tool_arc"], ["field", "radius"]]],
     ["panel_openings", [["tool", "window", "mdi:window-closed-variant", "tool_window"], ["tool", "door", "mdi:door", "tool_door"]]],
     ["panel_snap", "snaps"],
   ]],
@@ -716,7 +851,7 @@ const sideOf = (door, p) => {
 
 // Points that make up an object, e.g. to test whether it lies inside a selection frame.
 const objectPoints = (kind, item) => {
-  if (kind === "room") return roomPoints(item) || [];
+  if (kind === "room") return roomGeometry(item)?.outline || [];
   if (kind === "window" || kind === "radiator") return [item.from, item.to];
   if (kind === "door") return [item.hinge, item.to];
   if (kind === "stairs") return isRect(item.rect) ? [item.rect.slice(0, 2), item.rect.slice(2)] : [];
@@ -729,6 +864,7 @@ const shiftObject = (kind, o, delta) => {
   const item = clone(o);
   if (kind === "room") {
     if (isRect(item.rect)) item.rect = [...sh(item.rect.slice(0, 2)), ...sh(item.rect.slice(2))];
+    else if (isRect(item.ellipse)) item.ellipse = [...sh(item.ellipse.slice(0, 2)), ...sh(item.ellipse.slice(2))];
     else item.points = item.points.map(sh);
     if (item.label_position) item.label_position = sh(item.label_position);
   } else if (kind === "window" || kind === "radiator") {
@@ -743,6 +879,31 @@ const shiftObject = (kind, o, delta) => {
   return item;
 };
 
+const distToPolyline = (p, pts) => {
+  let best = Infinity;
+  for (let k = 0; k < pts.length - 1; k++) {
+    const q = projectOnSegment(p, pts[k], pts[k + 1]);
+    best = Math.min(best, Math.hypot(q[0] - p[0], q[1] - p[1]));
+  }
+  return best;
+};
+
+// Per-corner radii and per-wall arcs are lists along the corners; empty lists are left out of the config.
+const setCornerRadius = (room, i, r) => {
+  const radii = roomPoints(room).map((_, k) => Number(room.radii?.[k] ?? room.radius) || 0);
+  radii[i] = r;
+  delete room.radius;
+  if (radii.some(Boolean)) room.radii = radii;
+  else delete room.radii;
+};
+
+const setWallArc = (room, i, s) => {
+  const arcs = roomPoints(room).map((_, k) => Number(room.arcs?.[k]) || 0);
+  arcs[i] = s;
+  if (arcs.some(Boolean)) room.arcs = arcs;
+  else delete room.arcs;
+};
+
 class FloorplanCardEditor extends HTMLElement {
   constructor() {
     super();
@@ -751,6 +912,9 @@ class FloorplanCardEditor extends HTMLElement {
     this._draft = []; // polygon room being drawn
     this._pending = null; // first click of a two-click tool
     this._doorDraft = null; // door after two clicks, waiting for the side
+    this._arcEdge = null; // wall picked with the arc tool, waiting for the bend: { room, edge }
+    this._filletR = null; // radius for rounding corners, null = from the grid
+    this._shift = false;
     this._cursor = null;
     this._drag = null; // moving objects or handles
     this._band = null; // selection frame
@@ -917,8 +1081,9 @@ class FloorplanCardEditor extends HTMLElement {
     });
     for (const sel of [".qat", ".tabs", ".ribbon"]) this.shadowRoot.querySelector(sel).addEventListener("click", (ev) => this._onToolbar(ev));
     this.shadowRoot.querySelector(".ribbon").addEventListener("change", (ev) => {
-      if (ev.target.dataset.cmd !== "grid") return;
-      this._grid = Number(ev.target.value);
+      if (ev.target.dataset.cmd === "grid") this._grid = Number(ev.target.value);
+      else if (ev.target.dataset.cmd === "radius") this._filletR = Math.max(0, Number(ev.target.value) || 0);
+      else return;
       this._renderCanvas();
     });
     this.shadowRoot.querySelector(".panel").addEventListener("change", (ev) => this._onPanelChange(ev));
@@ -963,7 +1128,7 @@ class FloorplanCardEditor extends HTMLElement {
       <span class="spacer"></span>
       ${this._mode === "room-poly" && this._draft.length >= 3 ? `<button data-cmd="finish">${esc(this._t("finish"))}</button>` : ""}
       ${this._drafting ? `<button data-cmd="cancel">${esc(this._t("cancel"))}</button>` : ""}
-      ${full ? `<button class="save" data-cmd="save"><ha-icon icon="mdi:content-save-outline"></ha-icon>${esc(this._t("save"))}</button>` : ""}
+      ${full ? this._saveButton() : ""}
       ${small("fullscreen", full ? "mdi:fullscreen-exit" : "mdi:fullscreen", "fullscreen")}`;
 
     root.querySelector(".tabs").innerHTML = RIBBON.map(
@@ -984,6 +1149,10 @@ class FloorplanCardEditor extends HTMLElement {
             ? snaps
             : buttons
                 .map(([type, id, mdi, label]) => {
+                  if (type === "field") {
+                    return `<div class="stack"><label class="field"><ha-icon icon="mdi:radius-outline"></ha-icon>${esc(this._t("radius"))}
+                      <input type="number" data-cmd="radius" min="0" step="${this._grid}" value="${this._radius}"></label></div>`;
+                  }
                   const on = type === "tool" ? this._mode === id : false;
                   const icon = id === "fullscreen" && full ? "mdi:fullscreen-exit" : mdi;
                   return `<button class="big${on ? " on" : ""}" data-${type}="${id}" title="${esc(this._t(label))}"><ha-icon icon="${icon}"></ha-icon><span>${esc(this._t(label))}</span></button>`;
@@ -993,7 +1162,7 @@ class FloorplanCardEditor extends HTMLElement {
       })
       .join("");
 
-    const hint = this._mode === "door" && this._doorDraft ? "hint_door3" : `hint_${this._mode}`;
+    const hint = this._mode === "door" && this._doorDraft ? "hint_door3" : this._mode === "arc" && this._arcEdge ? "hint_arc2" : `hint_${this._mode}`;
     root.querySelector(".hint").textContent = this._t(hint);
     this._renderCoords();
   }
@@ -1004,7 +1173,12 @@ class FloorplanCardEditor extends HTMLElement {
   }
 
   get _drafting() {
-    return Boolean(this._draft.length || this._pending || this._doorDraft);
+    return Boolean(this._draft.length || this._pending || this._doorDraft || this._arcEdge);
+  }
+
+  // Radius for rounding corners: as set in the ribbon, otherwise five grid steps.
+  get _radius() {
+    return this._filletR ?? round(this._grid * 5);
   }
 
   _renderCoords() {
@@ -1038,9 +1212,8 @@ class FloorplanCardEditor extends HTMLElement {
 
     // Bodies: invisible shapes to grab whole objects. Later ones lie on top.
     (c.rooms || []).forEach((room, i) => {
-      const pts = roomPoints(room);
-      if (!Array.isArray(pts) || pts.length < 3) return;
-      handles.push(`<polygon class="body${isSel("room", i) ? " sel" : ""}" data-h="room:${i}:body" points="${pts.map((p) => p.join(",")).join(" ")}"/>`);
+      const geo = roomGeometry(room);
+      if (geo) handles.push(`<path class="body${isSel("room", i) ? " sel" : ""}" data-h="room:${i}:body" d="${geo.d}"/>`);
     });
     (c.stairs || []).forEach((s, i) => {
       if (!isRect(s.rect)) return;
@@ -1065,10 +1238,22 @@ class FloorplanCardEditor extends HTMLElement {
       const k = this._sel.kind;
       const i = this._sel.index;
       if (k === "room") {
-        roomPoints(sel).forEach((p, v) => handles.push(`<circle class="pt" data-h="room:${i}:v:${v}" cx="${p[0]}" cy="${p[1]}" r="${r}"/>`));
+        if (isRect(sel.ellipse)) {
+          // Ellipse: one handle on each side (left, top, right, bottom).
+          const [x1, y1, x2, y2] = normRect(sel.ellipse);
+          const [cx, cy] = [(x1 + x2) / 2, (y1 + y2) / 2];
+          [[x1, cy], [cx, y1], [x2, cy], [cx, y2]].forEach((p, v) => handles.push(`<circle class="pt" data-h="room:${i}:e:${v}" cx="${p[0]}" cy="${p[1]}" r="${r}"/>`));
+        } else if (roomGeometry(sel)) {
+          const pts = roomPoints(sel);
+          // A diamond in the middle of every wall bends it into an arc.
+          pts.forEach((_, v) => {
+            const { m } = wallFrame(pts, v, Number(sel.arcs?.[v]) || 0);
+            handles.push(`<rect class="pt mid" data-h="room:${i}:arc:${v}" x="${m[0] - r * 0.8}" y="${m[1] - r * 0.8}" width="${r * 1.6}" height="${r * 1.6}" transform="rotate(45 ${m[0]} ${m[1]})"/>`);
+          });
+          pts.forEach((p, v) => handles.push(`<circle class="pt" data-h="room:${i}:v:${v}" cx="${p[0]}" cy="${p[1]}" r="${r}"/>`));
+        }
         if (sel.name && sel.label !== false) {
-          const b = bbox(roomPoints(sel));
-          const [x, y] = sel.label_position || [(b.x1 + b.x2) / 2, (b.y1 + b.y2) / 2];
+          const [x, y] = roomCenter(sel);
           handles.push(`<rect class="pt label" data-h="room:${i}:label" x="${x - 2 * r}" y="${y - r}" width="${4 * r}" height="${2 * r}" rx="${r / 2}"/>`);
         }
       } else if (k === "window" || k === "radiator") {
@@ -1135,11 +1320,56 @@ class FloorplanCardEditor extends HTMLElement {
     // Highlight the wall the next point will snap to.
     if (wallMode && this._wallSnap && this._cursor && !this._doorDraft) {
       const wall = this._nearestWall(this._cursor);
-      if (wall) out.push(`<line class="wallhl" x1="${wall.a[0]}" y1="${wall.a[1]}" x2="${wall.b[0]}" y2="${wall.b[1]}" style="stroke-width:${Math.max(7 * uc, 4 * u)}"/>`);
+      if (wall) out.push(`<polyline class="wallhl" points="${wall.piece.map(fmt).join(" ")}" style="stroke-width:${Math.max(7 * uc, 4 * u)}"/>`);
+    }
+
+    // Stairs: highlight the walls the corner snaps to.
+    if (this._mode === "stairs" && this._cursor) {
+      for (const w of this._snapNearWalls(this._cursor).walls) {
+        const [a, b] = w.axis === 0 ? [[w.at, w.lo], [w.at, w.hi]] : [[w.lo, w.at], [w.hi, w.at]];
+        out.push(`<line class="wallhl" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" style="stroke-width:${Math.max(7 * uc, 4 * u)}"/>`);
+      }
+    }
+
+    if (this._mode === "room-ellipse" && this._pending && cur) {
+      const [x1, y1, x2, y2] = this._ellipseBox(this._pending, cur);
+      out.push(`<rect class="band" x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}"/>`);
+      out.push(`<ellipse class="room preview" cx="${(x1 + x2) / 2}" cy="${(y1 + y2) / 2}" rx="${(x2 - x1) / 2}" ry="${(y2 - y1) / 2}" style="stroke-width:${3 * uc}"/>`);
+      out.push(dim((x1 + x2) / 2, y1 - 10 * u, x2 - x1), dim(x2 + 14 * u, (y1 + y2) / 2, y2 - y1));
+    }
+
+    // Rounding: show the corner under the mouse as it would look.
+    if (this._mode === "fillet" && this._cursor) {
+      const hit = this._findCorner(this._cursor);
+      if (hit) {
+        const room = clone(this._config.rooms[hit.room]);
+        setCornerRadius(room, hit.corner, this._radius);
+        const geo = roomGeometry(room);
+        const v = roomPoints(room)[hit.corner];
+        if (geo) out.push(`<path class="shapepreview" d="${geo.d}"/>`);
+        out.push(`<circle class="pt" cx="${v[0]}" cy="${v[1]}" r="${r}"/>`);
+      }
+    }
+
+    // Arc wall: highlight the wall under the mouse, then follow the mouse with the bend.
+    if (this._mode === "arc" && this._cursor) {
+      if (this._arcEdge) {
+        const { room: ri, edge } = this._arcEdge;
+        const room = clone(this._config.rooms[ri]);
+        const s = this._arcBend(room, edge, this._cursor);
+        setWallArc(room, edge, s);
+        const geo = roomGeometry(room);
+        const { m } = wallFrame(roomPoints(room), edge, s);
+        if (geo) out.push(`<path class="shapepreview" d="${geo.d}"/>`);
+        out.push(dim(m[0], m[1] - 12 * u, Math.abs(s)));
+      } else {
+        const hit = this._findEdge(this._cursor);
+        if (hit) out.push(`<polyline class="wallhl" points="${hit.piece.map(fmt).join(" ")}" style="stroke-width:${Math.max(7 * uc, 4 * u)}"/>`);
+      }
     }
 
     if ((this._mode === "room-rect" || this._mode === "stairs") && this._pending && cur) {
-      const [x1, y1, x2, y2] = normRect([...this._pending, ...cur]);
+      const [x1, y1, x2, y2] = this._mode === "stairs" ? this._flushRect([...this._pending, ...cur]) : normRect([...this._pending, ...cur]);
       out.push(`<rect class="${this._mode === "stairs" ? "stair-body" : "room"} preview" x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" style="stroke-width:${3 * uc}"/>`);
       out.push(dim((x1 + x2) / 2, y1 - 10 * u, x2 - x1), dim(x2 + 14 * u, (y1 + y2) / 2, y2 - y1));
     }
@@ -1182,7 +1412,7 @@ class FloorplanCardEditor extends HTMLElement {
     }
 
     if (this._pending && this._mode !== "door") out.push(`<circle class="pt" cx="${this._pending[0]}" cy="${this._pending[1]}" r="${r}"/>`);
-    if (cur && !this._doorDraft) out.push(`<circle class="cursor" cx="${cur[0]}" cy="${cur[1]}" r="${r * 0.7}"/>`);
+    if (cur && !this._doorDraft && this._mode !== "fillet" && this._mode !== "arc") out.push(`<circle class="cursor" cx="${cur[0]}" cy="${cur[1]}" r="${r * 0.7}"/>`);
     return out.join("");
   }
 
@@ -1219,6 +1449,10 @@ class FloorplanCardEditor extends HTMLElement {
       rows.push(`<label><span>${esc(this._t("type"))}</span><select data-field="type">
         ${["room", "outdoor", "zone"].map((v) => `<option value="${v}"${(item.type || "room") === v ? " selected" : ""}>${esc(this._t("type_" + v))}</option>`).join("")}
         </select></label>`);
+      if (!isRect(item.ellipse)) {
+        const mixed = item.radii ? ` placeholder="${esc(this._t("corner_radius_mixed"))}"` : "";
+        rows.push(field("radius", this._t("corner_radius"), item.radius, `type="number" min="0" step="${this._grid}"${mixed}`));
+      }
       rows.push(field("navigation_path", this._t("navigation"), item.navigation_path, `placeholder="/dashboard/room"`));
       rows.push(entityField());
     } else if (k === "window" || k === "radiator") {
@@ -1274,19 +1508,63 @@ class FloorplanCardEditor extends HTMLElement {
     let best = null;
     let bestD = Infinity;
     for (const room of this._config.rooms || []) {
-      const pts = roomPoints(room);
-      if (!Array.isArray(pts)) continue;
-      pts.forEach((a, n) => {
-        const b = pts[(n + 1) % pts.length];
-        const q = projectOnSegment(p, a, b);
-        const d = Math.hypot(q[0] - p[0], q[1] - p[1]);
-        if (d < bestD) {
-          bestD = d;
-          best = { q, a, b };
+      for (const piece of roomGeometry(room)?.pieces || []) {
+        for (let k = 0; k < piece.pts.length - 1; k++) {
+          const [a, b] = [piece.pts[k], piece.pts[k + 1]];
+          const q = projectOnSegment(p, a, b);
+          const d = Math.hypot(q[0] - p[0], q[1] - p[1]);
+          if (d < bestD) {
+            bestD = d;
+            best = { q, a, b, piece: piece.pts };
+          }
         }
-      });
+      }
     }
     return best;
+  }
+
+  // Corner of a polygon or rectangle room near p (at the corner point or on its rounding).
+  _findCorner(p) {
+    let best = null;
+    let bestD = 20 * unitOf(this._vb);
+    (this._config.rooms || []).forEach((room, ri) => {
+      const geo = roomGeometry(room);
+      if (!geo || isRect(room.ellipse)) return;
+      const near = (d, corner) => {
+        if (d < bestD) [bestD, best] = [d, { room: ri, corner }];
+      };
+      roomPoints(room).forEach((v, ci) => near(Math.hypot(v[0] - p[0], v[1] - p[1]), ci));
+      geo.pieces.forEach((pc) => pc.corner !== undefined && near(distToPolyline(p, pc.pts), pc.corner));
+    });
+    return best;
+  }
+
+  // Wall of a polygon or rectangle room near p.
+  _findEdge(p) {
+    let best = null;
+    let bestD = 20 * unitOf(this._vb);
+    (this._config.rooms || []).forEach((room, ri) => {
+      if (isRect(room.ellipse)) return;
+      for (const pc of roomGeometry(room)?.pieces || []) {
+        const d = pc.edge === undefined ? Infinity : distToPolyline(p, pc.pts);
+        if (d < bestD) [bestD, best] = [d, { room: ri, edge: pc.edge, piece: pc.pts }];
+      }
+    });
+    return best;
+  }
+
+  // Bend of wall "edge" so that its middle follows p, on the grid.
+  _arcBend(room, edge, p) {
+    const { mid, n } = wallFrame(roomPoints(room), edge);
+    const s = (p[0] - mid[0]) * n[0] + (p[1] - mid[1]) * n[1];
+    return round(Math.round(s / this._grid) * this._grid);
+  }
+
+  // Box of an ellipse from two corners; with Shift a square, i.e. a circle.
+  _ellipseBox(a, q) {
+    if (!this._shift) return normRect([...a, ...q]);
+    const size = Math.max(Math.abs(q[0] - a[0]), Math.abs(q[1] - a[1]));
+    return normRect([...a, round(a[0] + Math.sign(q[0] - a[0] || 1) * size), round(a[1] + Math.sign(q[1] - a[1] || 1) * size)]);
   }
 
   // With wall snap, windows, doors and radiators always land on the nearest wall; without it only on the grid.
@@ -1331,7 +1609,7 @@ class FloorplanCardEditor extends HTMLElement {
     let s = sideRef ? (sideRef[0] - q1[0]) * n[0] + (sideRef[1] - q1[1]) * n[1] : 0;
     if (Math.abs(s) < off / 4) {
       const probe = [(q1[0] + q2[0]) / 2 + n[0] * off, (q1[1] + q2[1]) / 2 + n[1] * off];
-      s = (this._config.rooms || []).some((room) => Array.isArray(roomPoints(room)) && insidePolygon(probe, roomPoints(room))) ? 1 : -1;
+      s = (this._config.rooms || []).some((room) => roomGeometry(room) && insidePolygon(probe, roomGeometry(room).outline)) ? 1 : -1;
     }
     const k = Math.sign(s) * off;
     return [
@@ -1341,15 +1619,96 @@ class FloorplanCardEditor extends HTMLElement {
   }
 
   _snapFor(mode, p) {
-    if (mode === "window" || mode === "radiator") return this._snapToWall(p);
-    if (mode === "door") return this._doorDraft ? p : this._snapToWall(p);
-    const q = this._snap(p);
-    // Polygon room with ortho: continue horizontally or vertically from the last corner.
-    const last = this._draft[this._draft.length - 1];
-    if (mode === "room-poly" && this._ortho && last) {
-      return Math.abs(q[0] - last[0]) >= Math.abs(q[1] - last[1]) ? [q[0], last[1]] : [last[0], q[1]];
+    if (mode === "door" && this._doorDraft) return p;
+    // On a wall the wall gives the direction; free (wall snap off) ortho keeps them horizontal or vertical.
+    if (mode === "window" || mode === "radiator" || mode === "door") {
+      const q = this._snapToWall(p);
+      return this._wallSnap ? q : this._orthoFrom(this._pending, q);
     }
-    return q;
+    if (mode === "stairs") return this._snapNearWalls(p).q;
+    // Polygon room with ortho: continue horizontally or vertically from the last corner.
+    if (mode === "room-poly") return this._orthoFrom(this._draft[this._draft.length - 1], this._snap(p));
+    return this._snap(p);
+  }
+
+  // With ortho, q moves onto the horizontal or vertical line through "from".
+  _orthoFrom(from, q) {
+    if (!this._ortho || !from) return q;
+    return Math.abs(q[0] - from[0]) >= Math.abs(q[1] - from[1]) ? [q[0], from[1]] : [from[0], q[1]];
+  }
+
+  // How far stairs reach for a wall: about 30 px on screen.
+  get _wallLim() {
+    return 30 * unitOf(this._vb);
+  }
+
+  // Straight horizontal and vertical walls as { axis, at, lo, hi }: axis 0 is a vertical wall at x = at from y lo to hi.
+  _axisWalls() {
+    return (this._config.rooms || []).flatMap((room) =>
+      (roomGeometry(room)?.pieces || []).flatMap((pc) => {
+        if (pc.pts.length !== 2) return [];
+        const [a, b] = pc.pts;
+        const axis = Math.abs(a[0] - b[0]) < 1e-9 ? 0 : Math.abs(a[1] - b[1]) < 1e-9 ? 1 : -1;
+        return axis < 0 ? [] : [{ axis, at: a[axis], lo: Math.min(a[1 - axis], b[1 - axis]), hi: Math.max(a[1 - axis], b[1 - axis]) }];
+      })
+    );
+  }
+
+  // Corner of stairs: on the grid, but pulled onto walls nearby (in a room corner onto both).
+  _snapNearWalls(p) {
+    const q = this._snap(p);
+    const walls = [];
+    if (!this._wallSnap) return { q, walls };
+    const lim = this._wallLim;
+    for (const axis of [0, 1]) {
+      let best = null;
+      let bestD = lim;
+      for (const w of this._axisWalls()) {
+        if (w.axis !== axis || p[1 - axis] < w.lo - lim || p[1 - axis] > w.hi + lim) continue;
+        const d = Math.abs(p[axis] - w.at);
+        if (d < bestD) [bestD, best] = [d, w];
+      }
+      if (best) {
+        q[axis] = round(best.at);
+        walls.push(best);
+      }
+    }
+    return { q, walls };
+  }
+
+  // Wall snap for stairs: edges close to a straight horizontal or vertical wall move onto its inner face.
+  // "keepSize" (moving) shifts the whole rectangle instead of stretching it.
+  _flushRect(rect, keepSize = false) {
+    const r = normRect(rect);
+    if (!this._wallSnap) return r;
+    const lim = this._wallLim;
+    const half = 1.5 * this._u; // half the wall line
+    const walls = this._axisWalls();
+    // axis 0: vertical walls move x1/x2, axis 1: horizontal walls move y1/y2.
+    const target = (axis, value, inward) => {
+      let best = null;
+      let bestD = lim;
+      for (const w of walls) {
+        // The wall must run alongside the rectangle.
+        if (w.axis !== axis || w.hi <= r[1 - axis] || w.lo >= r[3 - axis]) continue;
+        const d = Math.abs(value - w.at);
+        if (d < bestD) [bestD, best] = [d, round(w.at + inward * half)];
+      }
+      return best;
+    };
+    for (const axis of [0, 1]) {
+      const [lo, hi] = [target(axis, r[axis], 1), target(axis, r[axis + 2], -1)];
+      if (keepSize) {
+        const shifts = [lo === null ? null : lo - r[axis], hi === null ? null : hi - r[axis + 2]].filter((v) => v !== null);
+        if (!shifts.length) continue;
+        const k = shifts.reduce((m, v) => (Math.abs(v) < Math.abs(m) ? v : m));
+        [r[axis], r[axis + 2]] = [round(r[axis] + k), round(r[axis + 2] + k)];
+      } else {
+        const [n1, n2] = [lo ?? r[axis], hi ?? r[axis + 2]];
+        if (n2 > n1) [r[axis], r[axis + 2]] = [n1, n2];
+      }
+    }
+    return r;
   }
 
   // --- changes ------------------------------------------------------------------------------------
@@ -1410,6 +1769,7 @@ class FloorplanCardEditor extends HTMLElement {
     }
     if (ev.button !== 0) return;
     const p = this._toPlan(ev);
+    this._shift = ev.shiftKey;
 
     if (this._mode === "select") {
       const h = ev.target.dataset?.h;
@@ -1440,6 +1800,26 @@ class FloorplanCardEditor extends HTMLElement {
       };
       this._svg.setPointerCapture(ev.pointerId);
       this._renderAll();
+      return;
+    }
+
+    // Rounding and arc walls change an existing room; the tool stays active for the next corner or wall.
+    if (this._mode === "fillet") {
+      const hit = this._findCorner(p);
+      if (hit) this._change((c) => setCornerRadius(c.rooms[hit.room], hit.corner, this._radius));
+      return;
+    }
+    if (this._mode === "arc") {
+      if (this._arcEdge) {
+        const { room, edge } = this._arcEdge;
+        this._arcEdge = null;
+        this._change((c) => setWallArc(c.rooms[room], edge, this._arcBend(c.rooms[room], edge, p)));
+      } else {
+        const hit = this._findEdge(p);
+        if (hit) this._arcEdge = { room: hit.room, edge: hit.edge };
+        this._renderToolbar();
+        this._renderCanvas();
+      }
       return;
     }
 
@@ -1492,9 +1872,15 @@ class FloorplanCardEditor extends HTMLElement {
         if (a[0] === q[0] || a[1] === q[1]) return this._renderAll();
         this._add("room", { name: this._t("room_n", { n: (this._config.rooms || []).length + 1 }), rect: normRect([...a, ...q]) });
         break;
+      case "room-ellipse": {
+        const box = this._ellipseBox(a, q);
+        if (box[0] === box[2] || box[1] === box[3]) return this._renderAll();
+        this._add("room", { name: this._t("room_n", { n: (this._config.rooms || []).length + 1 }), ellipse: box });
+        break;
+      }
       case "stairs":
         if (a[0] === q[0] || a[1] === q[1]) return this._renderAll();
-        this._add("stairs", { rect: normRect([...a, ...q]) });
+        this._add("stairs", { rect: this._flushRect([...a, ...q]) });
         break;
       case "window":
         this._add("window", { from: a, to: q });
@@ -1537,6 +1923,7 @@ class FloorplanCardEditor extends HTMLElement {
 
     const p = this._toPlan(ev);
     this._cursor = p;
+    this._shift = ev.shiftKey;
     if (this._band) {
       this._band.cur = p;
       this._renderCanvas();
@@ -1579,17 +1966,24 @@ class FloorplanCardEditor extends HTMLElement {
         pts[d.v] = nw;
         delete item.rect;
         item.points = pts;
+      } else if (d.part === "e") {
+        // Ellipse side handle: move that side of the surrounding box.
+        const box = normRect(o.ellipse);
+        const sp = this._snap(p);
+        box[d.v] = sp[d.v % 2];
+        if (box[0] !== box[2] && box[1] !== box[3]) item.ellipse = normRect(box);
+      } else if (d.part === "arc") {
+        setWallArc(item, d.v, this._arcBend(o, d.v, p));
       } else if (d.part === "label") {
-        const b = bbox(roomPoints(o));
-        const base = o.label_position || [(b.x1 + b.x2) / 2, (b.y1 + b.y2) / 2];
+        const base = roomCenter(o);
         item.label_position = [round(base[0] + delta[0]), round(base[1] + delta[1])];
       }
     } else if (d.kind === "door") {
       if (d.part === "body") [item.hinge, item.to] = this._moveOnWall(o.hinge, o.to, delta);
-      else item[d.part] = this._snapToWall(p);
+      else item[d.part] = this._wallSnap ? this._snapToWall(p) : this._orthoFrom(o[d.part === "hinge" ? "to" : "hinge"], this._snap(p));
     } else if (d.kind === "window") {
       if (d.part === "body") [item.from, item.to] = this._moveOnWall(o.from, o.to, delta);
-      else item[d.part] = this._snapToWall(p);
+      else item[d.part] = this._wallSnap ? this._snapToWall(p) : this._orthoFrom(o[d.part === "from" ? "to" : "from"], this._snap(p));
     } else if (d.kind === "radiator") {
       if (d.part === "body") {
         // Slide along the nearest wall, staying in front of it on the side the radiator is moved to.
@@ -1617,9 +2011,9 @@ class FloorplanCardEditor extends HTMLElement {
       }
     } else if (d.kind === "stairs") {
       const [x1, y1, x2, y2] = o.rect;
-      if (d.part === "body") Object.assign(item, shiftObject("stairs", o, delta));
-      else if (d.part === "c1") item.rect = normRect([...this._snap(p), x2, y2]);
-      else item.rect = normRect([x1, y1, ...this._snap(p)]);
+      if (d.part === "body") item.rect = this._flushRect(shiftObject("stairs", o, delta).rect, true);
+      else if (d.part === "c1") item.rect = this._flushRect([...this._snapNearWalls(p).q, x2, y2]);
+      else item.rect = this._flushRect([x1, y1, ...this._snapNearWalls(p).q]);
     } else {
       Object.assign(item, shiftObject(d.kind, o, delta));
     }
@@ -1700,6 +2094,7 @@ class FloorplanCardEditor extends HTMLElement {
     this._draft = [];
     this._pending = null;
     this._doorDraft = null;
+    this._arcEdge = null;
     if (mode !== "select") this._select(null);
     this._renderAll();
   }
@@ -1774,13 +2169,43 @@ class FloorplanCardEditor extends HTMLElement {
     this.shadowRoot.querySelector(".canvas")?.focus();
   }
 
-  // Save button in full screen: leave full screen and press "Save" of HA's card editor dialog.
-  // HA has no public API for that, so look for the dialog; without it the normal Save button is visible again.
+  _saveButton() {
+    const [icon, label, cls] = {
+      saving: ["mdi:loading", "save", " busy"],
+      saved: ["mdi:check", "saved", ""],
+      failed: ["mdi:alert-circle-outline", "save_failed", " failed"],
+    }[this._saveState] || ["mdi:content-save-outline", "save", ""];
+    return `<button class="save${cls}" data-cmd="save"${this._saveState === "saving" ? " disabled" : ""}><ha-icon icon="${icon}"></ha-icon>${esc(this._t(label))}</button>`;
+  }
+
+  // Save button in full screen: save the card but keep the dialog (and full screen) open.
+  // HA has no public API for that, so use the save function HA's card editor dialog got for this card.
+  // A card that is being added has none that can run twice: there HA's own Save runs (and closes the dialog).
   async _save() {
-    if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+    if (this._saveState === "saving") return;
     let node = this;
     while (node && node.localName !== "hui-dialog-edit-card") node = node.parentNode || node.host;
-    if (typeof node?._save === "function") node._save();
+    const params = node?._params;
+    if (typeof params?.saveCardConfig !== "function" || params.isNew || !node._cardConfig) {
+      if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+      if (typeof node?._save === "function") node._save();
+      return;
+    }
+    this._saveState = "saving";
+    this._renderToolbar();
+    try {
+      await params.saveCardConfig(node._cardConfig);
+      node._markDirtyStateClean?.();
+      this._saveState = "saved";
+    } catch (e) {
+      this._saveState = "failed";
+    }
+    this._renderToolbar();
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => {
+      this._saveState = null;
+      this._renderToolbar();
+    }, 2500);
   }
 
   // The four ways a door can sit in its opening: hinge at either end, opening to either side.
@@ -1831,6 +2256,11 @@ class FloorplanCardEditor extends HTMLElement {
         const len = Math.hypot(item.to[0] - item.hinge[0], item.to[1] - item.hinge[1]) || 1;
         const w = Number(value);
         if (w > 0) item.to = [round(item.hinge[0] + ((item.to[0] - item.hinge[0]) / len) * w), round(item.hinge[1] + ((item.to[1] - item.hinge[1]) / len) * w)];
+      } else if (key === "radius") {
+        // One radius for all corners replaces the per-corner ones.
+        delete item.radii;
+        if (Number(value) > 0) item.radius = Number(value);
+        else delete item.radius;
       } else if (key === "steps") {
         if (value === "") delete item.steps;
         else item.steps = Math.max(2, Math.round(Number(value)));
@@ -1859,6 +2289,9 @@ FloorplanCardEditor.styles = `
   .qat { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 4px 6px; border-bottom: 1px solid var(--divider-color); }
   .qat button { padding: 3px 7px; }
   .qat button.save { background: var(--primary-color); color: var(--text-primary-color, #fff); border-color: var(--primary-color); }
+  .qat button.save.failed { background: var(--error-color); border-color: var(--error-color); }
+  .qat button.save.busy ha-icon { animation: fp-spin 1s linear infinite; }
+  @keyframes fp-spin { to { transform: rotate(360deg); } }
   .spacer { flex: 1; }
   .tabs { display: flex; gap: 2px; padding: 4px 6px 0; }
   .tabs .tab { border: 0; border-radius: 6px 6px 0 0; background: transparent; color: var(--secondary-text-color); padding: 5px 12px; font-weight: 500; }
@@ -1874,6 +2307,7 @@ FloorplanCardEditor.styles = `
   .stack { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--secondary-text-color); }
   .stack .field { display: flex; align-items: center; gap: 4px; padding: 2px 4px; }
   .stack ha-icon { --mdc-icon-size: 16px; }
+  .stack input { font: inherit; width: 5em; padding: 1px 4px; border-radius: 6px; border: 1px solid var(--divider-color); background: transparent; color: var(--primary-text-color); }
   .stack select { font: inherit; padding: 1px 4px; border-radius: 6px; border: 1px solid var(--divider-color); background: transparent; color: var(--primary-text-color); }
   .stack button.toggle { font: 600 11px monospace; letter-spacing: .05em; text-transform: uppercase; padding: 3px 8px; color: var(--secondary-text-color); justify-content: flex-start; }
   .stack button.toggle.on { background: color-mix(in srgb, var(--primary-color) 18%, transparent); color: var(--primary-color); border-color: var(--primary-color); }
@@ -1896,6 +2330,7 @@ FloorplanCardEditor.styles = `
   .handles .pt { fill: var(--card-background-color); stroke: var(--primary-color); cursor: grab; vector-effect: non-scaling-stroke; stroke-width: 2px; }
   .handles .pt.hinge, .drafts .pt.hinge { fill: var(--primary-color); }
   .handles .pt.label { fill: transparent; stroke-dasharray: 3 2; }
+  .handles .pt.mid { fill: color-mix(in srgb, var(--primary-color) 35%, var(--card-background-color)); }
   .handles .ghost { fill: none; stroke: var(--secondary-text-color); stroke-opacity: .55; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; stroke-width: 1.5px; pointer-events: none; }
   .handles .ghost-hit { fill: none; stroke: transparent; cursor: pointer; }
   .handles .ghost-hit:hover { stroke: var(--primary-color); stroke-opacity: .25; }
@@ -1906,6 +2341,7 @@ FloorplanCardEditor.styles = `
   .drafts { pointer-events: none; }
   .drafts .band { fill: color-mix(in srgb, var(--primary-color) 10%, transparent); stroke: var(--primary-color); stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; stroke-width: 1px; }
   .drafts .preview { fill-opacity: .75; stroke: var(--fp-wall); }
+  .drafts .shapepreview { fill: color-mix(in srgb, var(--primary-color) 12%, transparent); stroke: var(--primary-color); stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; stroke-width: 2px; }
   .drafts .wallpreview { fill: none; stroke: var(--fp-wall); stroke-linejoin: round; stroke-linecap: round; }
   .drafts .wallhl { stroke: var(--primary-color); stroke-opacity: .45; stroke-linecap: round; }
   .drafts .winpreview { stroke: var(--fp-window); stroke-opacity: .8; }
