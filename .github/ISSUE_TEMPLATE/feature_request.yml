@@ -1,0 +1,26 @@
+name: Feature request
+description: An idea for the card or the editor
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are very welcome! English or German is fine – Deutsch ist auch willkommen.
+        For open questions or to discuss an idea first, you can also use [Discussions](https://github.com/mfurti/floorplan-card/discussions).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: Describe what you want to show or draw, or what is cumbersome today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could it work?
+      description: Your idea for the solution – in the card, in the editor or in the YAML.
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: A sketch, a screenshot of another card or a few lines of YAML.

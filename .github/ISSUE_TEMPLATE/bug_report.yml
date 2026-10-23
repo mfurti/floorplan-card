@@ -1,0 +1,62 @@
+name: Bug report
+description: Something does not work or looks wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time! English or German is fine – Deutsch ist auch willkommen.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does it happen?
+      options:
+        - In the card on the dashboard
+        - In the visual editor
+        - In the editor in full screen
+        - Template image (upload, scale, tracing)
+        - Somewhere else
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Card version
+      description: Shown in the browser console as "FLOORPLAN-CARD x.y.z".
+      placeholder: "0.8.0"
+    validations:
+      required: true
+  - type: input
+    id: ha
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.10.1"
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: "Chrome 141 on Windows, HA app on an Android tablet, ..."
+  - type: textarea
+    id: config
+    attributes:
+      label: Card configuration
+      description: The YAML of the card (or the part that matters). Please replace private entity IDs if you like.
+      render: yaml
+  - type: textarea
+    id: console
+    attributes:
+      label: Errors in the browser console
+      description: Press F12, open "Console" and copy any red lines.
+      render: text
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: A screenshot often says more than a long description.
