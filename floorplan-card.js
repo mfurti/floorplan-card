@@ -8,7 +8,7 @@
  * License: MIT
  */
 
-const VERSION = "0.7.3";
+const VERSION = "0.8.0";
 
 const STRINGS = {
   en: {
@@ -119,6 +119,39 @@ const STRINGS = {
     sel_element: "Icon / value",
     sel_label: "Label",
     text: "Text",
+    // Template image for tracing
+    tab_trace: "Template",
+    panel_trace_image: "Image",
+    panel_trace_adjust: "Adjust",
+    trace_upload: "Upload",
+    trace_show: "Show",
+    trace_hide: "Hide",
+    trace_remove: "Remove",
+    trace_move: "Move",
+    trace_scale: "Scale",
+    opacity: "Opacity",
+    rotation: "Rotation (°)",
+    hint_trace: "Upload a photo or scan of your floor plan (JPG, PNG or GIF, up to 10 MB) or drop it onto the drawing area. It only shows here in the editor, never in the card.",
+    hint_trace_ready: "Set the unit, draw the scale onto the image, then trace the rooms on top of it with the tools under Draw.",
+    "hint_trace-move": "Drag to move the image. Size and rotation are below.",
+    "hint_trace-scale": "Click two points on the image whose real distance you know, e.g. both ends of a wall.",
+    "hint_trace-scale2": "Enter the real distance below and apply it.",
+    trace_uploading: "Uploading image …",
+    trace_failed: "Upload failed: {error}",
+    trace_load_failed: "Could not load the image: {error}",
+    trace_bad_type: "Only JPG, PNG or GIF images can be uploaded.",
+    trace_scaled: "Scale set. Now trace the rooms on top of the image.",
+    sel_trace: "Template image",
+    trace_url: "Image address (URL)",
+    trace_url_hint: "Uploaded images are stored in Home Assistant. You can also enter an address like /local/plan.png.",
+    trace_width: "Width",
+    trace_distance: "Real distance between the two points ({unit})",
+    trace_distance_note: "Measured on the image: {d}",
+    trace_no_unit: "No unit set yet: pick it in the ribbon first, otherwise the number counts in plan units.",
+    panel_unit: "Unit",
+    unit: "Unit",
+    unit_none: "plan units",
+    apply: "Apply",
   },
   de: {
     open: "offen",
@@ -227,6 +260,38 @@ const STRINGS = {
     sel_element: "Symbol / Wert",
     sel_label: "Beschriftung",
     text: "Text",
+    tab_trace: "Vorlage",
+    panel_trace_image: "Bild",
+    panel_trace_adjust: "Anpassen",
+    trace_upload: "Hochladen",
+    trace_show: "Einblenden",
+    trace_hide: "Ausblenden",
+    trace_remove: "Entfernen",
+    trace_move: "Verschieben",
+    trace_scale: "Maßstab",
+    opacity: "Deckkraft",
+    rotation: "Drehung (°)",
+    hint_trace: "Foto oder Scan des Grundrisses hochladen (JPG, PNG oder GIF, bis 10 MB) oder auf die Zeichenfläche ziehen. Das Bild ist nur hier im Editor zu sehen, nie in der Karte.",
+    hint_trace_ready: "Einheit festlegen, den Maßstab auf dem Bild einzeichnen, dann mit den Werkzeugen unter „Zeichnen“ die Räume nachzeichnen.",
+    "hint_trace-move": "Ziehen verschiebt das Bild. Größe und Drehung stehen unten.",
+    "hint_trace-scale": "Zwei Punkte auf dem Bild anklicken, deren echten Abstand du kennst, z. B. beide Enden einer Wand.",
+    "hint_trace-scale2": "Unten den echten Abstand eingeben und übernehmen.",
+    trace_uploading: "Bild wird hochgeladen …",
+    trace_failed: "Hochladen fehlgeschlagen: {error}",
+    trace_load_failed: "Bild konnte nicht geladen werden: {error}",
+    trace_bad_type: "Hochladen geht nur mit JPG-, PNG- oder GIF-Bildern.",
+    trace_scaled: "Maßstab gesetzt. Jetzt die Räume auf dem Bild nachzeichnen.",
+    sel_trace: "Vorlagenbild",
+    trace_url: "Bildadresse (URL)",
+    trace_url_hint: "Hochgeladene Bilder liegen in Home Assistant. Alternativ geht eine Adresse wie /local/grundriss.png.",
+    trace_width: "Breite",
+    trace_distance: "Echter Abstand der beiden Punkte ({unit})",
+    trace_distance_note: "Auf dem Bild gemessen: {d}",
+    trace_no_unit: "Noch keine Einheit festgelegt: zuerst im Ribbon wählen, sonst gilt die Zahl in Plan-Einheiten.",
+    panel_unit: "Einheit",
+    unit: "Einheit",
+    unit_none: "Plan-Einheiten",
+    apply: "Übernehmen",
   },
 };
 
@@ -802,8 +867,17 @@ const ENTITY_DOMAINS = {
 };
 // Ribbon like in CAD programs: tabs → panels → buttons.
 // ["tool", mode, icon, label] picks a drawing tool, ["cmd", command, icon, label] runs a command,
-// ["field", "radius"] is the radius input for rounding corners.
+// ["field", name] is an input: the radius for rounding corners, the unit of the plan or the opacity of the template image.
 const RIBBON = [
+  ["tab_trace", [
+    ["panel_trace_image", [
+      ["cmd", "trace-upload", "mdi:image-plus-outline", "trace_upload"],
+      ["cmd", "trace-toggle", "mdi:eye-off-outline", "trace_hide"],
+      ["cmd", "trace-remove", "mdi:image-remove-outline", "trace_remove"],
+    ]],
+    ["panel_unit", [["field", "unit"]]],
+    ["panel_trace_adjust", [["tool", "trace-move", "mdi:cursor-move", "trace_move"], ["tool", "trace-scale", "mdi:ruler", "trace_scale"], ["field", "opacity"]]],
+  ]],
   ["tab_draw", [
     ["panel_rooms", [
       ["tool", "room-rect", "mdi:square-outline", "tool_room_rect"],
@@ -904,6 +978,29 @@ const setWallArc = (room, i, s) => {
   else delete room.arcs;
 };
 
+// Template image to trace a floor plan from, shown only in the editor:
+// trace_image: { url, position: [x, y] (top left), size: [w, h], rotation (degrees around the center), opacity, show }
+const isTraceImage = (img) =>
+  Boolean(img && typeof img.url === "string" && img.url && isPoint(img.position) && isPoint(img.size) && img.size[0] > 0 && img.size[1] > 0);
+const traceCenter = (img) => [img.position[0] + img.size[0] / 2, img.position[1] + img.size[1] / 2];
+const traceCorners = (img) => {
+  const [cx, cy] = traceCenter(img);
+  const a = ((Number(img.rotation) || 0) * Math.PI) / 180;
+  const [hw, hh] = [img.size[0] / 2, img.size[1] / 2];
+  return [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]].map(([x, y]) => [cx + x * Math.cos(a) - y * Math.sin(a), cy + x * Math.sin(a) + y * Math.cos(a)]);
+};
+const traceOpacity = (img) => Math.min(1, Math.max(0.1, Number(img.opacity ?? 0.5) || 0.5));
+const TRACE_TYPES = ["image/png", "image/jpeg", "image/gif"];
+// Unit of the plan coordinates ("unit" in the config). Only a label: changing it does not convert the plan.
+const UNITS = ["m", "cm", "mm"];
+const imageSize = (url) =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => (img.naturalWidth && img.naturalHeight ? resolve([img.naturalWidth, img.naturalHeight]) : reject(new Error("no size")));
+    img.onerror = () => reject(new Error(url));
+    img.src = url;
+  });
+
 class FloorplanCardEditor extends HTMLElement {
   constructor() {
     super();
@@ -914,6 +1011,8 @@ class FloorplanCardEditor extends HTMLElement {
     this._doorDraft = null; // door after two clicks, waiting for the side
     this._arcEdge = null; // wall picked with the arc tool, waiting for the bend: { room, edge }
     this._filletR = null; // radius for rounding corners, null = from the grid
+    this._calib = null; // points clicked on the template image to set its scale
+    this._notice = null; // message shown instead of the hint (upload running, failed, ...)
     this._shift = false;
     this._cursor = null;
     this._drag = null; // moving objects or handles
@@ -977,10 +1076,29 @@ class FloorplanCardEditor extends HTMLElement {
     return unitOf(cardViewBox(this._config));
   }
 
+  // Unit of the plan, "" if none is set.
+  get _unit() {
+    return UNITS.includes(this._config.unit) ? this._config.unit : "";
+  }
+
+  // The template image, if there is a valid one; _traceShown only while it is not hidden.
+  get _trace() {
+    return isTraceImage(this._config.trace_image) ? this._config.trace_image : null;
+  }
+
+  get _traceShown() {
+    return this._trace?.show === false ? null : this._trace;
+  }
+
+  // Everything the view should be able to show: the plan and the template image.
+  _extentPoints() {
+    return allPoints(this._config).concat(this._trace ? traceCorners(this._trace) : []);
+  }
+
   // --- view: fit, zoom, pan -----------------------------------------------------------------------
 
   _fitView() {
-    const pts = allPoints(this._config);
+    const pts = this._extentPoints();
     if (!pts.length) {
       this._vb = [-1, -1, 12, 9];
     } else {
@@ -1011,7 +1129,7 @@ class FloorplanCardEditor extends HTMLElement {
   _zoomAt(p, factor) {
     const [x, y, w, h] = this._vb;
     const size = Math.max(...(() => {
-      const b = bbox(allPoints(this._config).concat([[0, 0]]));
+      const b = bbox(this._extentPoints().concat([[0, 0]]));
       return [b.x2 - b.x1, b.y2 - b.y1, 1e-6];
     })());
     const nw = w * factor;
@@ -1049,9 +1167,25 @@ class FloorplanCardEditor extends HTMLElement {
         <div class="overlay"></div>
       </div>
       <div class="statusbar"><span class="coords"></span><span class="nav">${esc(this._t("nav_hint"))}</span></div>
-      <div class="panel"></div>`;
+      <div class="panel"></div>
+      <input type="file" class="tracefile" accept="${TRACE_TYPES.join(",")}" hidden>`;
     this._svg = this.shadowRoot.querySelector("svg");
     const canvas = this.shadowRoot.querySelector(".canvas");
+    const file = this.shadowRoot.querySelector(".tracefile");
+    file.addEventListener("change", () => {
+      if (file.files[0]) this._uploadTrace(file.files[0]);
+      file.value = "";
+    });
+    // An image file dropped onto the drawing area becomes the template image.
+    canvas.addEventListener("dragover", (ev) => {
+      if ([...(ev.dataTransfer?.types || [])].includes("Files")) ev.preventDefault();
+    });
+    canvas.addEventListener("drop", (ev) => {
+      const dropped = ev.dataTransfer?.files?.[0];
+      if (!dropped) return;
+      ev.preventDefault();
+      this._uploadTrace(dropped);
+    });
     this._svg.addEventListener("pointerdown", (ev) => this._onDown(ev));
     this._svg.addEventListener("pointermove", (ev) => this._onMove(ev));
     this._svg.addEventListener("pointerup", (ev) => this._onUp(ev));
@@ -1080,7 +1214,34 @@ class FloorplanCardEditor extends HTMLElement {
       if (ev.key === " ") this._space = false;
     });
     for (const sel of [".qat", ".tabs", ".ribbon"]) this.shadowRoot.querySelector(sel).addEventListener("click", (ev) => this._onToolbar(ev));
+    // The mouse wheel scrolls the ribbon sideways when it does not fit.
+    const ribbon = this.shadowRoot.querySelector(".ribbon");
+    ribbon.addEventListener(
+      "wheel",
+      (ev) => {
+        if (ribbon.scrollWidth <= ribbon.clientWidth || Math.abs(ev.deltaX) > Math.abs(ev.deltaY)) return;
+        ev.preventDefault();
+        ribbon.scrollLeft += ev.deltaY;
+      },
+      { passive: false }
+    );
+    // Opacity: follow the slider live, store it when it is released.
+    this.shadowRoot.querySelector(".ribbon").addEventListener("input", (ev) => {
+      const img = ev.target.dataset.cmd === "opacity" && this._svg.querySelector(".trace image");
+      if (img) img.style.opacity = ev.target.value;
+    });
     this.shadowRoot.querySelector(".ribbon").addEventListener("change", (ev) => {
+      if (ev.target.dataset.cmd === "unit") {
+        this._change((c) => {
+          if (ev.target.value) c.unit = ev.target.value;
+          else delete c.unit;
+        });
+        return;
+      }
+      if (ev.target.dataset.cmd === "opacity") {
+        if (this._trace) this._change((c) => (c.trace_image.opacity = Number(ev.target.value)));
+        return;
+      }
       if (ev.target.dataset.cmd === "grid") this._grid = Number(ev.target.value);
       else if (ev.target.dataset.cmd === "radius") this._filletR = Math.max(0, Number(ev.target.value) || 0);
       else return;
@@ -1088,6 +1249,9 @@ class FloorplanCardEditor extends HTMLElement {
     });
     this.shadowRoot.querySelector(".panel").addEventListener("change", (ev) => this._onPanelChange(ev));
     this.shadowRoot.querySelector(".panel").addEventListener("click", (ev) => this._onPanelClick(ev));
+    this.shadowRoot.querySelector(".panel").addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && ev.target.dataset.trace === "distance") this._applyCalib(ev.target.value);
+    });
     // Follow the size of the drawing area (dialog width, full screen), keeping the current zoom.
     new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
@@ -1142,6 +1306,7 @@ class FloorplanCardEditor extends HTMLElement {
         <button class="toggle${this._wallSnap ? " on" : ""}" data-cmd="wallsnap" title="${esc(this._t("wall_snap_title"))}"><ha-icon icon="mdi:magnet"></ha-icon>${esc(this._t("wall_snap"))}</button>
       </div>`;
     const panels = RIBBON.find(([tab]) => tab === this._tab)[1];
+    const img = this._trace;
     root.querySelector(".ribbon").innerHTML = panels
       .map(([panel, buttons]) => {
         const body =
@@ -1149,21 +1314,35 @@ class FloorplanCardEditor extends HTMLElement {
             ? snaps
             : buttons
                 .map(([type, id, mdi, label]) => {
+                  if (type === "field" && id === "unit") {
+                    const opts = ["", ...UNITS].map((v) => `<option value="${v}"${v === this._unit ? " selected" : ""}>${esc(v || this._t("unit_none"))}</option>`).join("");
+                    return `<div class="stack"><label class="field"><ha-icon icon="mdi:ruler-square"></ha-icon>${esc(this._t("unit"))}</label>
+                      <select data-cmd="unit">${opts}</select></div>`;
+                  }
+                  if (type === "field" && id === "opacity") {
+                    return `<div class="stack"><label class="field"><ha-icon icon="mdi:circle-opacity"></ha-icon>${esc(this._t("opacity"))}</label>
+                      <input type="range" data-cmd="opacity" min="0.1" max="1" step="0.05" value="${img ? traceOpacity(img) : 0.5}"${img ? "" : " disabled"}></div>`;
+                  }
                   if (type === "field") {
                     return `<div class="stack"><label class="field"><ha-icon icon="mdi:radius-outline"></ha-icon>${esc(this._t("radius"))}
                       <input type="number" data-cmd="radius" min="0" step="${this._grid}" value="${this._radius}"></label></div>`;
                   }
                   const on = type === "tool" ? this._mode === id : false;
-                  const icon = id === "fullscreen" && full ? "mdi:fullscreen-exit" : mdi;
-                  return `<button class="big${on ? " on" : ""}" data-${type}="${id}" title="${esc(this._t(label))}"><ha-icon icon="${icon}"></ha-icon><span>${esc(this._t(label))}</span></button>`;
+                  let icon = id === "fullscreen" && full ? "mdi:fullscreen-exit" : mdi;
+                  if (id === "trace-toggle" && img?.show === false) [icon, label] = ["mdi:eye-outline", "trace_show"];
+                  // Template image commands need an image, its tools a visible one.
+                  const off = id.startsWith("trace-") && id !== "trace-upload" && (!img || (type === "tool" && img.show === false));
+                  return `<button class="big${on ? " on" : ""}" data-${type}="${id}"${off ? " disabled" : ""} title="${esc(this._t(label))}"><ha-icon icon="${icon}"></ha-icon><span>${esc(this._t(label))}</span></button>`;
                 })
                 .join("");
         return `<div class="rpanel"><div class="rbody">${body}</div><div class="rtitle">${esc(this._t(panel))}</div></div>`;
       })
       .join("");
 
-    const hint = this._mode === "door" && this._doorDraft ? "hint_door3" : this._mode === "arc" && this._arcEdge ? "hint_arc2" : `hint_${this._mode}`;
-    root.querySelector(".hint").textContent = this._t(hint);
+    let hint = this._mode === "door" && this._doorDraft ? "hint_door3" : this._mode === "arc" && this._arcEdge ? "hint_arc2" : `hint_${this._mode}`;
+    if (this._mode === "trace-scale" && this._calib?.length === 2) hint = "hint_trace-scale2";
+    else if (this._mode === "select" && this._tab === "tab_trace" && !this._sels.length) hint = img ? "hint_trace_ready" : "hint_trace";
+    root.querySelector(".hint").textContent = this._notice || this._t(hint);
     this._renderCoords();
   }
 
@@ -1173,7 +1352,7 @@ class FloorplanCardEditor extends HTMLElement {
   }
 
   get _drafting() {
-    return Boolean(this._draft.length || this._pending || this._doorDraft || this._arcEdge);
+    return Boolean(this._draft.length || this._pending || this._doorDraft || this._arcEdge || this._calib);
   }
 
   // Radius for rounding corners: as set in the ribbon, otherwise five grid steps.
@@ -1185,7 +1364,7 @@ class FloorplanCardEditor extends HTMLElement {
     const el = this.shadowRoot.querySelector(".coords");
     if (!el) return;
     const p = this._cursor && this._snap(this._cursor);
-    el.textContent = p ? `x ${p[0]}   y ${p[1]}` : "";
+    el.textContent = p ? `x ${p[0]}   y ${p[1]}${this._unit ? "   " + this._unit : ""}` : "";
   }
 
   _renderCanvas() {
@@ -1280,9 +1459,24 @@ class FloorplanCardEditor extends HTMLElement {
       handles.push(`<circle class="marker${isSel("element", i) ? " sel" : ""}${el.entity ? "" : " empty"}" data-h="element:${i}:pos" cx="${el.position[0]}" cy="${el.position[1]}" r="${11 * uc}"/>`);
     });
 
+    // Template image below grid and plan; while it shows, the room fills turn see-through.
+    const img = this._traceShown;
+    let trace = "";
+    if (img) {
+      const [x, y] = img.position;
+      const [w, h] = img.size;
+      const [cx, cy] = traceCenter(img);
+      const frame = this._mode === "trace-move" ? `<rect class="traceframe" x="${x}" y="${y}" width="${w}" height="${h}"/>` : "";
+      trace = `<g class="trace" transform="rotate(${Number(img.rotation) || 0} ${cx} ${cy})">
+        <image href="${esc(img.url)}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="none" style="opacity:${traceOpacity(img)}"/>${frame}</g>`;
+    }
+
     this._svg.setAttribute("viewBox", vb.join(" "));
     this._svg.classList.toggle("drawing", this._mode !== "select");
+    this._svg.classList.toggle("tracing", Boolean(img));
+    this._svg.classList.toggle("trace-move", this._mode === "trace-move");
     this._svg.innerHTML = `
+      ${trace}
       <g class="gridlines" style="stroke-width:${0.6 * u}">${lines.join("")}</g>
       ${planMarkup(c, this._hass, cardViewBox(c), this._lang)}
       <g class="handles" style="stroke-width:${1.5 * u}">${handles.join("")}</g>
@@ -1309,7 +1503,8 @@ class FloorplanCardEditor extends HTMLElement {
   _draftMarkup(u, uc, r) {
     const out = [];
     const cur = this._cursor && this._mode !== "select" ? this._snapFor(this._mode, this._cursor) : null;
-    const dim = (x, y, value) => `<text class="dim" x="${x}" y="${y}" style="font-size:${12 * u}px;stroke-width:${3 * u}">${round(value)}</text>`;
+    const unit = this._unit ? ` ${this._unit}` : "";
+    const dim = (x, y, value) => `<text class="dim" x="${x}" y="${y}" style="font-size:${12 * u}px;stroke-width:${3 * u}">${round(value)}${unit}</text>`;
     const wallMode = ["window", "door", "radiator"].includes(this._mode);
 
     if (this._band) {
@@ -1411,8 +1606,18 @@ class FloorplanCardEditor extends HTMLElement {
       }
     }
 
+    // Scale of the template image: line between the two points with its length on the image.
+    if (this._mode === "trace-scale" && this._calib) {
+      const [a, b] = [this._calib[0], this._calib[1] || cur];
+      if (b) {
+        out.push(`<line class="calib" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`);
+        out.push(dim((a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 12 * u, Math.hypot(b[0] - a[0], b[1] - a[1])));
+      }
+      this._calib.forEach((p) => out.push(`<circle class="pt" cx="${p[0]}" cy="${p[1]}" r="${r}"/>`));
+    }
+
     if (this._pending && this._mode !== "door") out.push(`<circle class="pt" cx="${this._pending[0]}" cy="${this._pending[1]}" r="${r}"/>`);
-    if (cur && !this._doorDraft && this._mode !== "fillet" && this._mode !== "arc") out.push(`<circle class="cursor" cx="${cur[0]}" cy="${cur[1]}" r="${r * 0.7}"/>`);
+    if (cur && !this._doorDraft && !["fillet", "arc", "trace-move"].includes(this._mode)) out.push(`<circle class="cursor" cx="${cur[0]}" cy="${cur[1]}" r="${r * 0.7}"/>`);
     return out.join("");
   }
 
@@ -1430,6 +1635,10 @@ class FloorplanCardEditor extends HTMLElement {
     if (this._sels.length > 1) {
       panel.innerHTML = `<div class="head"><b>${esc(this._t("n_selected", { n: this._sels.length }))}</b>
         <button class="danger" data-cmd="delete"><ha-icon icon="mdi:delete-outline"></ha-icon> ${esc(this._t("delete"))}</button></div>`;
+      return;
+    }
+    if (!this._sels.length && (this._tab === "tab_trace" || this._mode.startsWith("trace-"))) {
+      panel.innerHTML = this._tracePanel();
       return;
     }
     const item = this._item(this._sel);
@@ -1487,6 +1696,34 @@ class FloorplanCardEditor extends HTMLElement {
     panel.innerHTML = `<div class="head"><b>${esc(this._t("sel_" + k))}</b>
         <button class="danger" data-cmd="delete"><ha-icon icon="mdi:delete-outline"></ha-icon> ${esc(this._t("delete"))}</button></div>
       <div class="fields">${rows.join("")}</div>`;
+  }
+
+  // Properties of the template image, or the distance input while setting its scale.
+  _tracePanel() {
+    const img = this._trace;
+    const field = (key, label, value, extra = "") =>
+      `<label><span>${esc(label)}</span><input data-trace="${key}" value="${esc(value ?? "")}" ${extra}></label>`;
+    if (this._mode === "trace-scale" && this._calib?.length === 2) {
+      const [a, b] = this._calib;
+      const d = round(Math.hypot(b[0] - a[0], b[1] - a[1]));
+      return `<div class="head"><b>${esc(this._t("trace_scale"))}</b></div>
+        <div class="fields">${field("distance", this._t("trace_distance", { unit: this._unit || this._t("unit_none") }), d, `type="number" min="0" step="any"`)}
+        <div class="note">${esc(this._t("trace_distance_note", { d: `${d}${this._unit ? " " + this._unit : ""}` }))}${this._unit ? "" : `<br>${esc(this._t("trace_no_unit"))}`}</div>
+        <div class="buttons"><button class="primary" data-cmd="trace-apply"><ha-icon icon="mdi:check"></ha-icon>${esc(this._t("apply"))}</button>
+          <button data-cmd="cancel">${esc(this._t("cancel"))}</button></div></div>`;
+    }
+    const url = field("url", this._t("trace_url"), this._config.trace_image?.url, `placeholder="/local/..."`);
+    if (!img) {
+      return `<div class="head"><b>${esc(this._t("sel_trace"))}</b>
+          <button class="primary" data-cmd="trace-upload"><ha-icon icon="mdi:image-plus-outline"></ha-icon>${esc(this._t("trace_upload"))}</button></div>
+        <div class="fields">${url}<div class="note">${esc(this._t("trace_url_hint"))}</div></div>`;
+    }
+    return `<div class="head"><b>${esc(this._t("sel_trace"))}</b>
+        <button class="danger" data-cmd="trace-remove"><ha-icon icon="mdi:image-remove-outline"></ha-icon> ${esc(this._t("trace_remove"))}</button></div>
+      <div class="fields">
+        ${field("width", `${this._t("trace_width")}${this._unit ? ` (${this._unit})` : ""}`, img.size[0], `type="number" min="0" step="any"`)}
+        ${field("rotation", this._t("rotation"), Number(img.rotation) || 0, `type="number" step="0.5"`)}
+        ${url}<div class="note">${esc(this._t("trace_url_hint"))}</div></div>`;
   }
 
   // --- geometry helpers ---------------------------------------------------------------------------
@@ -1619,7 +1856,8 @@ class FloorplanCardEditor extends HTMLElement {
   }
 
   _snapFor(mode, p) {
-    if (mode === "door" && this._doorDraft) return p;
+    // Points on the template image are wherever the image shows them, not on the grid.
+    if ((mode === "door" && this._doorDraft) || mode.startsWith("trace-")) return p;
     // On a wall the wall gives the direction; free (wall snap off) ortho keeps them horizontal or vertical.
     if (mode === "window" || mode === "radiator" || mode === "door") {
       const q = this._snapToWall(p);
@@ -1823,6 +2061,22 @@ class FloorplanCardEditor extends HTMLElement {
       return;
     }
 
+    // Template image: drag it anywhere, or click the two points for its scale (a third click starts over).
+    if (this._mode === "trace-move") {
+      if (!this._trace) return;
+      this._drag = { kind: "trace", start: p, before: clone(this._config), orig: [...this._trace.position], moved: false };
+      this._svg.setPointerCapture(ev.pointerId);
+      return;
+    }
+    if (this._mode === "trace-scale") {
+      const a = this._calib?.length === 1 && this._calib[0];
+      if (a && Math.hypot(p[0] - a[0], p[1] - a[1]) < 4 * unitOf(this._vb)) return;
+      this._calib = a ? [a, p] : [p];
+      this._renderAll();
+      if (a) this.shadowRoot.querySelector('.panel [data-trace="distance"]')?.select?.();
+      return;
+    }
+
     const q = this._snapFor(this._mode, p);
 
     if (this._mode === "room-poly") {
@@ -1933,6 +2187,13 @@ class FloorplanCardEditor extends HTMLElement {
     if (!d) {
       if (this._mode !== "select") this._renderCanvas();
       else this._renderCoords();
+      return;
+    }
+    // The template image moves freely, it does not follow the grid.
+    if (d.kind === "trace") {
+      this._config.trace_image.position = [round(d.orig[0] + p[0] - d.start[0]), round(d.orig[1] + p[1] - d.start[1])];
+      d.moved = true;
+      this._renderCanvas();
       return;
     }
     const delta = [round(Math.round((p[0] - d.start[0]) / this._grid) * this._grid), round(Math.round((p[1] - d.start[1]) / this._grid) * this._grid)];
@@ -2095,6 +2356,8 @@ class FloorplanCardEditor extends HTMLElement {
     this._pending = null;
     this._doorDraft = null;
     this._arcEdge = null;
+    this._calib = null;
+    this._notice = null;
     if (mode !== "select") this._select(null);
     this._renderAll();
   }
@@ -2137,8 +2400,12 @@ class FloorplanCardEditor extends HTMLElement {
     const cmd = btn.dataset.cmd;
     if (btn.dataset.tab) {
       this._tab = btn.dataset.tab;
+      this._notice = null;
       this._renderToolbar();
+      this._renderPanel();
+      this.shadowRoot.querySelector(".ribbon").scrollLeft = 0;
     } else if (btn.dataset.tool) this._setMode(btn.dataset.tool);
+    else if (cmd?.startsWith("trace-")) this._traceCommand(cmd);
     else if (cmd === "ortho") {
       this._ortho = !this._ortho;
       this._renderToolbar();
@@ -2222,7 +2489,10 @@ class FloorplanCardEditor extends HTMLElement {
     const btn = ev.target.closest("button");
     if (!btn) return;
     const sel = this._sel;
-    if (btn.dataset.cmd === "delete") this._deleteSelected();
+    if (btn.dataset.cmd === "trace-apply") this._applyCalib(this.shadowRoot.querySelector('.panel [data-trace="distance"]')?.value);
+    else if (btn.dataset.cmd?.startsWith("trace-")) this._traceCommand(btn.dataset.cmd);
+    else if (btn.dataset.cmd === "cancel") this._setMode(this._mode);
+    else if (btn.dataset.cmd === "delete") this._deleteSelected();
     else if (btn.dataset.cmd === "swap-hinge") {
       // Hinge to the other end, door still opens to the same side of the wall.
       this._change((c) => {
@@ -2241,7 +2511,117 @@ class FloorplanCardEditor extends HTMLElement {
     }
   }
 
+  // --- template image -----------------------------------------------------------------------------
+
+  _traceCommand(cmd) {
+    if (cmd === "trace-upload") this.shadowRoot.querySelector(".tracefile").click();
+    else if (cmd === "trace-toggle" && this._trace) {
+      const hide = this._trace.show !== false;
+      if (hide && this._mode.startsWith("trace-")) this._setMode("select");
+      this._change((c) => {
+        if (hide) c.trace_image.show = false;
+        else delete c.trace_image.show;
+      });
+    } else if (cmd === "trace-remove" && this._config.trace_image) {
+      if (this._mode.startsWith("trace-")) this._setMode("select");
+      this._change((c) => delete c.trace_image);
+    }
+  }
+
+  _showNotice(text) {
+    this._notice = text;
+    this._renderToolbar();
+  }
+
+  // Upload to Home Assistant's image storage (the same one person pictures use), which serves it without login.
+  async _uploadTrace(file) {
+    this._tab = "tab_trace";
+    if (!TRACE_TYPES.includes(file.type)) return this._showNotice(this._t("trace_bad_type"));
+    this._showNotice(this._t("trace_uploading"));
+    let url;
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await this._hass.fetchWithAuth("/api/image/upload", { method: "POST", body });
+      if (!res.ok) throw new Error(res.status === 413 ? "> 10 MB" : `HTTP ${res.status}`);
+      url = `/api/image/serve/${(await res.json()).id}/original`;
+    } catch (e) {
+      return this._showNotice(this._t("trace_failed", { error: e.message }));
+    }
+    await this._setTraceUrl(url);
+  }
+
+  // A new image fills most of the visible area; a replaced one keeps place, width and rotation.
+  async _setTraceUrl(url) {
+    let w, h;
+    try {
+      [w, h] = await imageSize(url);
+    } catch (e) {
+      return this._showNotice(this._t("trace_load_failed", { error: e.message }));
+    }
+    const old = this._trace;
+    this._notice = null;
+    this._change((c) => {
+      if (old) {
+        c.trace_image = { ...c.trace_image, url, size: [old.size[0], round((old.size[0] * h) / w)] };
+      } else {
+        const [x, y, vw, vh] = this._vb;
+        const s = Math.min((vw * 0.8) / w, (vh * 0.8) / h);
+        c.trace_image = { url, position: [round(x + (vw - w * s) / 2), round(y + (vh - h * s) / 2)], size: [round(w * s), round(h * s)], opacity: 0.5 };
+      }
+    });
+    this._tab = "tab_trace";
+    this._setMode(old ? this._mode : "trace-scale");
+  }
+
+  // Scale the image around the first point, so the distance between the two points becomes the real one.
+  _applyCalib(value) {
+    const [a, b] = this._calib || [];
+    const measured = a && b ? Math.hypot(b[0] - a[0], b[1] - a[1]) : 0;
+    const dist = Number(String(value ?? "").replace(",", "."));
+    if (!this._trace || !measured || !(dist > 0)) return;
+    const f = dist / measured;
+    const empty = !allPoints(this._config).length;
+    this._change((c) => {
+      const im = c.trace_image;
+      const [cx, cy] = traceCenter(im);
+      const size = [im.size[0] * f, im.size[1] * f];
+      im.size = size.map(round);
+      im.position = [round(a[0] + (cx - a[0]) * f - size[0] / 2), round(a[1] + (cy - a[1]) * f - size[1] / 2)];
+    });
+    // Nothing drawn yet: the grid follows the new size of the image.
+    if (empty) this._grid = null;
+    this._fitView();
+    this._setMode("select");
+    this._showNotice(this._t("trace_scaled"));
+  }
+
+  _onTraceChange(key, value) {
+    if (key === "url") {
+      if (value) this._setTraceUrl(value);
+      return;
+    }
+    const n = Number(value.replace(",", "."));
+    if (!this._trace || value === "" || !isFinite(n)) return this._renderPanel();
+    if (key === "width" && n > 0) {
+      // New width: the height follows, the center stays.
+      this._change((c) => {
+        const im = c.trace_image;
+        const [cx, cy] = traceCenter(im);
+        im.size = [round(n), round((n * im.size[1]) / im.size[0])];
+        im.position = [round(cx - im.size[0] / 2), round(cy - im.size[1] / 2)];
+      });
+    } else if (key === "rotation") {
+      this._change((c) => {
+        const deg = round((((n % 360) + 540) % 360) - 180);
+        if (deg) c.trace_image.rotation = deg;
+        else delete c.trace_image.rotation;
+      });
+    }
+  }
+
   _onPanelChange(ev) {
+    if (ev.target.dataset.trace) return this._onTraceChange(ev.target.dataset.trace, ev.target.value.trim());
     const key = ev.target.dataset.field;
     const sel = this._sel;
     if (!key || !sel) return;
@@ -2293,13 +2673,19 @@ FloorplanCardEditor.styles = `
   .qat button.save.busy ha-icon { animation: fp-spin 1s linear infinite; }
   @keyframes fp-spin { to { transform: rotate(360deg); } }
   .spacer { flex: 1; }
-  .tabs { display: flex; gap: 2px; padding: 4px 6px 0; }
-  .tabs .tab { border: 0; border-radius: 6px 6px 0 0; background: transparent; color: var(--secondary-text-color); padding: 5px 12px; font-weight: 500; }
+  .tabs { display: flex; gap: 2px; padding: 4px 6px 0; overflow-x: auto; scrollbar-width: none; }
+  .tabs .tab { flex: none; white-space: nowrap; border: 0; border-radius: 6px 6px 0 0; background: transparent; color: var(--secondary-text-color); padding: 5px 12px; font-weight: 500; }
   .tabs .tab.on { background: var(--card-background-color); color: var(--primary-color); box-shadow: inset 0 2px 0 var(--primary-color); }
-  .ribbon { display: flex; flex-wrap: wrap; background: var(--card-background-color); min-height: 86px; }
-  .rpanel { display: flex; flex-direction: column; border-right: 1px solid var(--divider-color); padding: 6px 6px 0; }
-  .rbody { display: flex; gap: 4px; flex: 1; align-items: flex-start; }
-  .rtitle { font-size: 11px; color: var(--secondary-text-color); text-align: center; padding: 3px 0 4px; }
+  /* One row like in CAD programs: when the dialog is too narrow it scrolls sideways instead of wrapping. */
+  .ribbon {
+    display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; background: var(--card-background-color); min-height: 86px;
+    scrollbar-width: thin; overscroll-behavior-x: contain;
+  }
+  .rpanel { display: flex; flex-direction: column; flex: none; border-right: 1px solid var(--divider-color); padding: 6px 6px 0; }
+  .rbody { display: flex; flex-wrap: nowrap; gap: 4px; flex: 1; align-items: flex-start; }
+  .rbody > * { flex: none; }
+  .rtitle { font-size: 11px; color: var(--secondary-text-color); text-align: center; padding: 3px 0 4px; white-space: nowrap; }
+  .ribbon button.big, .stack .field, .stack button.toggle { white-space: nowrap; }
   .ribbon button.big { flex-direction: column; gap: 2px; min-width: 64px; padding: 6px 6px 4px; border-color: transparent; background: transparent; font-size: 12px; }
   .ribbon button.big ha-icon { --mdc-icon-size: 28px; }
   .ribbon button.big:hover { border-color: var(--divider-color); }
@@ -2351,6 +2737,13 @@ FloorplanCardEditor.styles = `
   .drafts .pt { fill: var(--primary-color); }
   .drafts .pt.first { fill: var(--card-background-color); stroke: var(--primary-color); stroke-width: 2px; vector-effect: non-scaling-stroke; }
   .drafts .cursor { fill: var(--primary-color); opacity: .6; }
+  .drafts .calib { stroke: var(--primary-color); stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; stroke-width: 2px; }
+  .trace { pointer-events: none; }
+  .trace .traceframe { fill: none; stroke: var(--primary-color); stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; stroke-width: 2px; }
+  svg.trace-move { cursor: move; }
+  svg.tracing .room, svg.tracing .outdoor, svg.tracing .zone { fill-opacity: .3; }
+  .stack input[type="range"] { width: 8em; padding: 0; border: 0; accent-color: var(--primary-color); }
+  button.primary { background: var(--primary-color); color: var(--text-primary-color, #fff); border-color: var(--primary-color); }
   .overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .overlay ha-state-icon { position: absolute; transform: translate(-50%, -50%); --mdc-icon-size: 18px; color: var(--primary-text-color); }
   .panel { border: 1px solid var(--divider-color); border-radius: 8px; padding: 8px 10px; }

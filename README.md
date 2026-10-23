@@ -15,6 +15,7 @@ plan right in the dashboard: no SVG editor, no image, no YAML needed.
 - Click a room to open a dashboard, click a window or radiator for its details
 - Colors follow your Home Assistant theme
 - Visual editor with a CAD-like ribbon: grid, ortho and wall snap, undo, zoom, full screen
+- Trace a template: upload a photo or scan of your floor plan, set its scale with two points and draw on top
 
 ## Installation
 
@@ -53,6 +54,27 @@ radiators:
     entity: climate.living_room
 ```
 
+## Tracing a template image
+
+In the editor, open the *Template* tab (the first one) and upload a photo or scan of your floor plan
+(JPG, PNG or GIF, up to 10 MB), or drop it onto the drawing area. The image is stored in Home Assistant's
+image storage. Pick the unit of your plan (m, cm or mm), then draw the scale: click two points whose real
+distance you know (e.g. both ends of a wall) and enter that distance – the image is scaled to fit. Move, rotate, fade or hide it as needed and trace the rooms on top.
+
+The image only shows in the editor, never in the card. It is kept in the card config so it is still there
+next time:
+
+```yaml
+unit: m                    # m, cm or mm – a label for dimensions, coordinates are not converted
+trace_image:
+  url: /api/image/serve/<id>/original   # or e.g. /local/plan.png
+  position: [-0.4, -0.2]   # top left corner
+  size: [12.5, 8.3]
+  rotation: -1.5           # degrees, optional
+  opacity: 0.5             # optional
+  show: false              # optional, hides it
+```
+
 ## License
 
 MIT
@@ -69,7 +91,14 @@ Der Grundriss wird direkt im Dashboard gezeichnet, ohne SVG-Programm, Bild oder 
 Fenster in der Farbe ihres Kontakts (offen: rot und pulsierend, zu: grün) · Türen mit Aufschlag, Heizkörper
 zeigen, wenn sie heizen, Treppen mit Laufrichtung · Symbole und Werte beliebiger Entitäten, Beschriftungen ·
 Klick auf einen Raum öffnet ein Dashboard · Farben aus dem HA-Theme · Editor mit Ribbon wie in CAD-Programmen:
-Raster, Ortho, Wandfang, Rückgängig, Zoom, Vollbild.
+Raster, Ortho, Wandfang, Rückgängig, Zoom, Vollbild · Vorlage nachzeichnen: Foto oder Scan des Grundrisses
+hochladen, Maßstab über zwei Punkte setzen und darauf zeichnen.
+
+**Vorlage nachzeichnen:** Im Editor den Reiter *Vorlage* (ganz vorne) öffnen und ein Foto oder einen Scan des
+Grundrisses hochladen (JPG, PNG oder GIF, bis 10 MB) oder auf die Zeichenfläche ziehen. Die Einheit des Plans
+festlegen (m, cm oder mm), dann den Maßstab einzeichnen: zwei Punkte anklicken, deren echten Abstand du kennst
+(z. B. beide Enden einer Wand), und den Abstand eingeben – das Bild passt sich an. Verschieben, drehen, Deckkraft und Ausblenden nach Bedarf, dann die Räume darauf
+nachzeichnen. Das Bild ist nur im Editor zu sehen, nie in der Karte (Schlüssel `trace_image`, siehe oben).
 
 **Installation:** `floorplan-card.js` nach `/config/www/floorplan-card/` kopieren, unter
 *Einstellungen → Dashboards → ⋮ → Ressourcen* als *JavaScript-Modul* mit der URL
