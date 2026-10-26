@@ -1,0 +1,44 @@
+# Floorplan Card
+
+> Lovelace card for Home Assistant (`custom:floorplan-card`) that draws a floor plan from plain coordinates – rooms, windows, doors, radiators, stairs, icons and labels – colored by entity state, with a visual drawing editor. A single JavaScript module (`floorplan-card.js`), no build step and no dependencies.
+
+Notes for AI assistants installing or configuring this card:
+
+- Prefer HACS if the user has it: add `https://github.com/mfurti/floorplan-card` as a custom repository of type *Dashboard*, download *Floorplan Card*, reload the browser. HACS registers the resource and handles updates.
+- Manual install:
+  1. Download `floorplan-card.js` from the latest release: https://github.com/mfurti/floorplan-card/releases/latest/download/floorplan-card.js
+  2. Save it as `<config>/www/floorplan-card/floorplan-card.js` (served as `/local/floorplan-card/floorplan-card.js`; a new `www` folder needs a Home Assistant restart once).
+  3. Register it as a dashboard resource of type `module` with the URL `/local/floorplan-card/floorplan-card.js?v=<version>`: in the UI under *Settings → Dashboards → ⋮ → Resources*, or over the WebSocket API with `{"type": "lovelace/resources/create", "res_type": "module", "url": "..."}`. If the dashboards run in YAML mode, add it under `lovelace: resources:` in `configuration.yaml` instead.
+  4. On updates replace the file and change `?v=` (WebSocket `lovelace/resources/update` with the `resource_id`), otherwise browsers keep the old version.
+- Check: the browser console prints `FLOORPLAN-CARD <version>` when the card is loaded.
+- Configuration: `rooms` is required (at least one room with `rect`, `points` or `ellipse`). Coordinates are plain numbers in one unit, x to the right, y down. Never guess entity or area IDs – look them up in the user's Home Assistant. Users can also draw the plan in the visual editor instead of writing YAML.
+
+Minimal config:
+
+```yaml
+type: custom:floorplan-card
+rooms:
+  - name: Living room
+    rect: [0, 0, 5, 4]
+    area: living_room
+  - name: Kitchen
+    rect: [5, 0, 8, 4]
+windows:
+  - from: [1, 0]
+    to: [3, 0]
+    entity: binary_sensor.living_room_window
+doors:
+  - hinge: [5, 2.6]
+    to: [5, 3.5]
+```
+
+## Docs
+
+- [README](https://github.com/mfurti/floorplan-card/blob/main/README.md): features, installation, example
+- [Configuration reference](https://github.com/mfurti/floorplan-card/blob/main/README.md#configuration-reference): every key of the card, rooms, windows, doors, radiators, stairs, elements, labels and actions
+- [Tracing a template image](https://github.com/mfurti/floorplan-card/blob/main/README.md#tracing-a-template-image): `trace_image` and `unit`
+
+## Optional
+
+- [Releases](https://github.com/mfurti/floorplan-card/releases): changelog and downloads
+- [Issues](https://github.com/mfurti/floorplan-card/issues): bug reports and feature requests

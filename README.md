@@ -22,6 +22,8 @@ plan right in the dashboard: no SVG editor, no image, no YAML needed.
 
 ## Installation
 
+Installing with an AI assistant? Point it to [`llms.txt`](llms.txt) – compact install steps and config notes.
+
 ### HACS (recommended)
 
 [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mfurti&repository=floorplan-card&category=plugin)
@@ -46,7 +48,7 @@ new version. The browser console shows the running version (`FLOORPLAN-CARD 0.9.
 
 ## Example
 
-Coordinates can be in any unit (meters, centimeters, pixels of a photo).
+Coordinates can be in any unit (meters, centimeters, pixels of a photo). All keys: [Configuration reference](#configuration-reference).
 
 ```yaml
 type: custom:floorplan-card
@@ -74,17 +76,125 @@ radiators:
     entity: climate.living_room
 ```
 
-## Clicking a room
+## Configuration reference
 
-| Key | Effect |
-| --- | --- |
-| `area` | Area ID from Home Assistant. A room without `name` shows the area's name. |
-| `navigation_path` | Dashboard to open, e.g. `/dashboard-home/kitchen`. |
-| `entity` | Light or switch: the room lights up while it is on. |
-| `tap_action` | `action: none`, `more-info`, `navigate`, `area` or any Home Assistant action (`toggle`, `perform-action`, `url`). |
+All coordinates are plain numbers in one unit of your choice (meters, centimeters, pixels of a photo). x grows to the
+right, y grows **down**. A point is `[x, y]`, a box is `[x1, y1, x2, y2]` (two opposite corners).
 
-Without `tap_action` a click opens `navigation_path` if set, otherwise the area popup, otherwise the entity details.
-In the editor, pick the area and the click action in the room's properties.
+### Card
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `type` | string | `custom:floorplan-card` |
+| `rooms` | list | **Required**, at least one room. |
+| `windows`, `doors`, `radiators`, `stairs`, `elements`, `labels` | list | Optional, see below. |
+| `title` | string | Card header. |
+| `unit` | `m` \| `cm` \| `mm` | Label for dimensions in the editor. Coordinates are not converted. |
+| `viewbox` | `[x, y, width, height]` | Visible area. Default: everything plus a small margin. |
+| `padding` | number | Margin around the plan when `viewbox` is not set. Default: 3 % of the plan size. |
+| `trace_image` | object | Template image, only shown in the editor. See [Tracing a template image](#tracing-a-template-image). |
+
+### Rooms
+
+One of `rect`, `points` or `ellipse` is required.
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `rect` | box | Rectangle. Corners in order: top left, top right, bottom right, bottom left. |
+| `points` | list of points | Polygon, at least 3 corners, walls run from each point to the next. |
+| `ellipse` | box | Circle or ellipse inside this box. |
+| `name` | string | Shown in the middle of the room. Without a name the room shows the name of its `area`. |
+| `type` | `room` \| `outdoor` \| `zone` | `outdoor`: balcony or terrace (faded). `zone`: area inside a room (dashed outline, no fill). Default `room`. |
+| `area` | area ID | Home Assistant area. A click shows its devices in a popup. |
+| `entity` | entity ID | The room lights up while it is `on`, `open`, `playing`, `home`, `heat`, `cool`, `heating` or `cleaning`. |
+| `navigation_path` | string | Dashboard to open on click, e.g. `/dashboard-home/kitchen`. |
+| `tap_action` | action | What a click does, see [Actions](#actions). |
+| `radius` | number | Rounds all corners (not for `ellipse`). |
+| `radii` | list of numbers | Radius per corner, in the order of the corners; overrides `radius`. |
+| `arcs` | list of numbers | Bends wall *i* (from corner *i* to *i + 1*) into an arc: how far its middle moves out. The sign picks the side, `0` keeps it straight. |
+| `label` | boolean | `false` hides the name. |
+| `label_position` | point | Where the name goes. Default: middle of the room. |
+| `label_size` | `small` | Smaller name, e.g. for small rooms. |
+
+Without `tap_action`, a click opens `navigation_path` if set, otherwise the area popup, otherwise the details of
+`entity`. Rooms without any of these are not clickable.
+
+### Windows
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `from`, `to` | point | **Required.** Both ends, on a wall. |
+| `entity` | entity ID | Contact sensor, cover or `input_boolean`: open red and pulsing, closed green, anything else grey. Needed for clicks. |
+| `name` | string | Tooltip, default: friendly name of the entity. |
+| `tap_action` | action | Default: entity details. |
+
+### Doors
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `hinge` | point | **Required.** Hinge side of the opening. |
+| `to` | point | **Required.** Other side of the opening; the distance is the door width. |
+| `swing` | `left` \| `right` | Side the door opens to, seen from `hinge` towards `to`. Default `left`. |
+| `gap` | boolean | `false` keeps the wall line drawn through the opening. |
+
+### Radiators
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `from`, `to` | point | **Required.** Both ends, along a wall. |
+| `entity` | `climate` entity | Glows and pulses while `hvac_action` is `heating`, faded when `off` or unavailable. Needed for clicks. |
+| `width` | number | Depth of the radiator. Default: a fixed size on screen. |
+| `name` | string | Tooltip. |
+| `tap_action` | action | Default: entity details. |
+
+### Stairs
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `rect` | box | **Required.** |
+| `direction` | `up` \| `down` \| `left` \| `right` | Where the arrow points (the way up). Default: along the longer side. |
+| `steps` | number | Number of steps. Default: from the shape. |
+| `name` | string | Text at the start of the arrow. Default: "up" in the language of Home Assistant; `""` hides it. |
+| `navigation_path` | string | Dashboard to open on click, e.g. the upper floor. |
+| `tap_action` | action | See [Actions](#actions). |
+
+### Elements
+
+Icons or values of any entity, placed on the plan.
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `position` | point | **Required.** Middle of the icon or value. |
+| `entity` | entity ID | **Required** to show anything. |
+| `type` | `icon` \| `state` | Icon (colored when active) or the formatted state as a small chip. Default `icon`. |
+| `icon` | string | Icon instead of the entity's own, e.g. `mdi:lightbulb`. |
+| `prefix`, `suffix` | string | Text before and after the value (`type: state`). |
+| `title` | string | Tooltip. |
+| `tap_action` | action | Default: entity details. |
+
+### Labels
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `position` | point | **Required.** |
+| `text` | string | **Required.** |
+| `size` | `small` | Smaller, lighter text. |
+
+### Actions
+
+`tap_action` takes `action` and the usual Home Assistant fields:
+
+| `action` | Fields | Effect |
+| --- | --- | --- |
+| `more-info` | `entity` (optional) | Details dialog of the item's entity or of `entity`. |
+| `navigate` | `navigation_path` (optional) | Opens a dashboard; without a path the item's `navigation_path`. |
+| `area` | `area` (optional) | Popup with the devices of the item's `area` or of `area`. |
+| `toggle` | `entity` (optional) | Toggles the item's entity or `entity`. |
+| `perform-action` | `perform_action`, `data`, `target` | Runs a Home Assistant action, e.g. `light.turn_on`. (`call-service` / `service` also work.) |
+| `url` | `url_path` | Opens a web page in a new tab. |
+| `none` | | Nothing; a room is then not clickable at all. |
+
+Any action can have `confirmation: { text: "..." }` to ask first.
 
 ## Tracing a template image
 
