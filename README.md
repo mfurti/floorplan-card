@@ -14,7 +14,9 @@ plan right in the dashboard: no SVG editor, no image, no YAML needed.
 - Windows colored by their contact sensor (open: red and pulsing, closed: green)
 - Doors with swing, radiators showing when they heat, stairs with direction
 - Icons and values of any entity on the plan, labels
-- Click a room to open a dashboard, click a window or radiator for its details
+- Link a room to a Home Assistant area: a click shows the area's devices in a popup (switch lights, see readings)
+- Choose per room what a click does: nothing, entity details, open a dashboard or show the area
+- Click a window or radiator for its details
 - Colors follow your Home Assistant theme
 - Visual editor with a CAD-like ribbon: grid, ortho and wall snap, undo, zoom, full screen
 - Trace a template: upload a photo or scan of your floor plan, set its scale with two points and draw on top
@@ -37,7 +39,7 @@ rooms:
     rect: [0, 0, 5, 4]
     radii: [0.5, 0, 0, 0]
     navigation_path: /dashboard-home/living-room
-  - name: Kitchen
+  - area: kitchen            # name and click popup come from the Home Assistant area
     rect: [5, 0, 8, 4]
     arcs: [0, 0.8, 0, 0]
   - name: Bay
@@ -55,6 +57,18 @@ radiators:
     to: [0.3, 2.5]
     entity: climate.living_room
 ```
+
+## Clicking a room
+
+| Key | Effect |
+| --- | --- |
+| `area` | Area ID from Home Assistant. A room without `name` shows the area's name. |
+| `navigation_path` | Dashboard to open, e.g. `/dashboard-home/kitchen`. |
+| `entity` | Light or switch: the room lights up while it is on. |
+| `tap_action` | `action: none`, `more-info`, `navigate`, `area` or any Home Assistant action (`toggle`, `perform-action`, `url`). |
+
+Without `tap_action` a click opens `navigation_path` if set, otherwise the area popup, otherwise the entity details.
+In the editor, pick the area and the click action in the room's properties.
 
 ## Tracing a template image
 
@@ -94,9 +108,13 @@ Der Grundriss wird direkt im Dashboard gezeichnet, ohne SVG-Programm, Bild oder 
 **Funktionen:** Räume als Rechteck, Vieleck oder Kreis/Ellipse, mit abgerundeten Ecken und Bogenwänden ·
 Fenster in der Farbe ihres Kontakts (offen: rot und pulsierend, zu: grün) · Türen mit Aufschlag, Heizkörper
 zeigen, wenn sie heizen, Treppen mit Laufrichtung · Symbole und Werte beliebiger Entitäten, Beschriftungen ·
-Klick auf einen Raum öffnet ein Dashboard · Farben aus dem HA-Theme · Editor mit Ribbon wie in CAD-Programmen:
+Räume mit einem HA-Bereich verknüpfen: Ein Klick zeigt dessen Geräte im Popup (Lichter schalten, Werte sehen) · pro Raum wählbar, was ein Klick tut (nichts, Details der Entität, Dashboard öffnen, Bereich anzeigen) · Farben aus dem HA-Theme · Editor mit Ribbon wie in CAD-Programmen:
 Raster, Ortho, Wandfang, Rückgängig, Zoom, Vollbild · Vorlage nachzeichnen: Foto oder Scan des Grundrisses
 hochladen, Maßstab über zwei Punkte setzen und darauf zeichnen.
+
+**Raum anklicken:** In den Eigenschaften des Raums *Bereich* und *Beim Antippen* wählen. Ohne eigene Wahl
+öffnet ein Klick das Dashboard (`navigation_path`), sonst den Bereich (`area`), sonst die Details der Entität.
+Ein Raum ohne Namen zeigt den Namen des Bereichs. Schlüssel siehe Tabelle *Clicking a room* oben.
 
 **Vorlage nachzeichnen:** Im Editor den Reiter *Vorlage* (ganz vorne) öffnen und ein Foto oder einen Scan des
 Grundrisses hochladen (JPG, PNG oder GIF, bis 10 MB) oder auf die Zeichenfläche ziehen. Die Einheit des Plans

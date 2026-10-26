@@ -8,7 +8,7 @@
  * License: MIT
  */
 
-const VERSION = "0.8.1";
+const VERSION = "0.9.0";
 
 const STRINGS = {
   en: {
@@ -98,6 +98,18 @@ const STRINGS = {
     type_outdoor: "Outdoor (balcony, terrace)",
     type_zone: "Zone inside a room",
     navigation: "On click open (path)",
+    area: "Area",
+    area_none: "– none –",
+    area_empty: "No devices in this area.",
+    tap: "On click",
+    tap_auto: "Automatic",
+    tap_none: "Nothing",
+    "tap_more-info": "Entity details",
+    tap_navigate: "Open dashboard",
+    tap_area: "Show area",
+    tap_yaml: "Own action (YAML)",
+    dashboard_path: "Dashboard (path)",
+    close: "Close",
     gap: "Opening in the wall",
     width: "Width",
     swap_hinge: "Hinge to other end",
@@ -239,6 +251,18 @@ const STRINGS = {
     type_outdoor: "Außen (Balkon, Terrasse)",
     type_zone: "Bereich in einem Raum",
     navigation: "Bei Klick öffnen (Pfad)",
+    area: "Bereich",
+    area_none: "– keiner –",
+    area_empty: "Keine Geräte in diesem Bereich.",
+    tap: "Beim Antippen",
+    tap_auto: "Automatisch",
+    tap_none: "Nichts",
+    "tap_more-info": "Details der Entität",
+    tap_navigate: "Dashboard öffnen",
+    tap_area: "Bereich anzeigen",
+    tap_yaml: "Eigene Aktion (YAML)",
+    dashboard_path: "Dashboard (Pfad)",
+    close: "Schließen",
     gap: "Öffnung in der Wand",
     width: "Breite",
     swap_hinge: "Angel ans andere Ende",
@@ -552,6 +576,24 @@ const planStyle = (u) => `
   .stair-arrow { stroke-width: ${1.5 * u}; }
 `;
 
+// A room without a name shows the name of its Home Assistant area.
+const roomName = (room, hass) => room.name || (room.area && hass?.areas?.[room.area]?.name) || "";
+
+// What a click on a room does: "tap_action", else open its dashboard, show its area or the entity details.
+const roomAction = (room) =>
+  room.tap_action ||
+  (room.navigation_path ? { action: "navigate" } : room.area ? { action: "area" } : { action: "more-info" });
+
+// Choice in the editor for a room's "tap_action": "" automatic, a simple action, or "yaml" for anything else.
+const tapChoice = (ta) => {
+  if (!ta) return "";
+  const simple = ["none", "more-info", "navigate", "area"].includes(ta.action) && Object.keys(ta).length === 1;
+  return simple ? ta.action : "yaml";
+};
+
+const roomClickable = (room) =>
+  room.tap_action ? room.tap_action.action !== "none" : !!(room.navigation_path || room.area || room.entity);
+
 /** The plan itself (rooms, stairs, doors, windows, radiators, labels) as SVG markup. Used by card and editor. */
 const planMarkup = (config, hass, vb, language) => {
   const u = unitOf(vb);
@@ -563,7 +605,7 @@ const planMarkup = (config, hass, vb, language) => {
       if (!geo) return "";
       const kind = ["outdoor", "zone"].includes(room.type) ? room.type : "room";
       const active = room.entity && ACTIVE_STATES.has(st(room.entity)?.state) ? " active" : "";
-      const click = room.tap_action || room.navigation_path || room.entity ? ` data-action="room" data-index="${i}"` : "";
+      const click = roomClickable(room) ? ` data-action="room" data-index="${i}"` : "";
       if (kind === "zone" && isRect(room.rect) && !room.radius && !room.radii && !room.arcs) {
         const [x1, y1, x2, y2] = normRect(room.rect);
         return `<rect class="${kind}${active}"${click} x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="${8 * u}"/>`;
@@ -625,10 +667,11 @@ const planMarkup = (config, hass, vb, language) => {
     .join("");
 
   const roomLabels = (config.rooms || []).map((room) => {
-    if (room.label === false || !room.name || !roomGeometry(room)) return "";
+    const name = roomName(room, hass);
+    if (room.label === false || !name || !roomGeometry(room)) return "";
     const [x, y] = roomCenter(room);
     const size = room.label_size === "small" || room.type === "zone" ? "small" : "name";
-    return `<text class="${size}" x="${x}" y="${y}">${esc(room.name)}</text>`;
+    return `<text class="${size}" x="${x}" y="${y}">${esc(name)}</text>`;
   });
   const freeLabels = (config.labels || []).map((l) =>
     isPoint(l.position) ? `<text class="${l.size === "small" ? "small" : "name"}" x="${l.position[0]}" y="${l.position[1]}">${esc(l.text)}</text>` : ""
@@ -644,6 +687,7 @@ const elementValue = (hass, stateObj) =>
 const THEME_VARS = `
   --fp-room: color-mix(in srgb, var(--primary-color) 20%, var(--card-background-color, var(--ha-card-background, #1c1c1c)));
   --fp-room-active: color-mix(in srgb, var(--state-active-color, #fdd835) 25%, var(--fp-room));
+  --fp-room-hover: color-mix(in srgb, var(--primary-color) 32%, var(--card-background-color, var(--ha-card-background, #1c1c1c)));
   --fp-wall: color-mix(in srgb, var(--primary-color) 60%, var(--primary-text-color));
   --fp-text: var(--primary-text-color);
   --fp-text-small: var(--secondary-text-color);
@@ -745,12 +789,27 @@ class FloorplanCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._popup) this._popup.hass = hass;
     if (!this._config) return;
     // Only redraw when one of our entities changed.
     const states = this._entities.map((id) => hass.states[id]);
     if (this._lastStates && states.every((s, i) => s === this._lastStates[i])) return;
     this._lastStates = states;
     this._render();
+  }
+
+  disconnectedCallback() {
+    this._popup?.close();
+  }
+
+  // Popup with the devices of a Home Assistant area.
+  _openArea(area, title) {
+    this._popup?.close();
+    const popup = document.createElement("floorplan-area-popup");
+    popup.setup(this, area, title, () => this._popup === popup && (this._popup = null));
+    popup.hass = this._hass;
+    document.body.appendChild(popup);
+    this._popup = popup;
   }
 
   getCardSize() {
@@ -808,18 +867,25 @@ class FloorplanCard extends HTMLElement {
     const list = { room: "rooms", window: "windows", radiator: "radiators", stairs: "stairs", element: "elements" }[target.dataset.action];
     const item = this._config[list][Number(target.dataset.index)];
     const action =
-      item.tap_action ||
-      (item.navigation_path ? { action: "navigate", navigation_path: item.navigation_path } : { action: "more-info" });
-    this._handleAction(action, item.entity);
+      target.dataset.action === "room"
+        ? roomAction(item)
+        : item.tap_action || (item.navigation_path ? { action: "navigate" } : { action: "more-info" });
+    this._handleAction(action, item);
   }
 
-  _handleAction(action, entity) {
+  _handleAction(action, item) {
     if (action.confirmation && !window.confirm(action.confirmation.text || t("confirm", {}, langOf(this._hass)))) return;
-    const target = action.entity || entity;
+    const target = action.entity || item.entity;
     switch (action.action) {
-      case "navigate":
-        window.history.pushState(null, "", action.navigation_path);
+      case "navigate": {
+        const path = action.navigation_path || item.navigation_path;
+        if (!path) break;
+        window.history.pushState(null, "", path);
         window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
+        break;
+      }
+      case "area":
+        if (action.area || item.area) this._openArea(action.area || item.area, roomName(item, this._hass));
         break;
       case "toggle":
         if (target) this._hass.callService("homeassistant", "toggle", { entity_id: target });
@@ -848,9 +914,146 @@ FloorplanCard.styles = `
   svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   [data-action] { cursor: pointer; }
   svg .zone[data-action] { pointer-events: all; fill: transparent; }
+  svg .room[data-action]:hover, svg .outdoor[data-action]:hover { fill: var(--fp-room-hover); }
+  svg .zone[data-action]:hover { fill: color-mix(in srgb, var(--primary-color) 12%, transparent); }
   .overlay { position: absolute; inset: 0; pointer-events: none; }
   .overlay > * { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
   ${PLAN_CSS}
+`;
+
+/* ------------------------------------------------------------------------------------------------
+ * Area popup
+ * ---------------------------------------------------------------------------------------------- */
+
+// Order in the area popup: things to switch first, then readings.
+const AREA_ORDER = ["light", "switch", "fan", "cover", "climate", "media_player", "lock", "input_boolean", "scene", "script", "sensor", "binary_sensor"];
+const AREA_SKIP = new Set(["update", "event", "button", "image", "camera", "tts", "stt", "conversation", "device_tracker"]);
+const TOGGLE_DOMAINS = new Set(["light", "switch", "fan", "input_boolean"]);
+
+/** Visible entities of an area (directly or through their device), sorted by AREA_ORDER and name. */
+const areaEntities = (hass, area) => {
+  const rank = (id) => {
+    const n = AREA_ORDER.indexOf(id.split(".")[0]);
+    return n < 0 ? AREA_ORDER.length : n;
+  };
+  const name = (id) => hass.states[id].attributes.friendly_name || id;
+  return Object.values(hass?.entities || {})
+    .filter((e) => !e.hidden && !e.entity_category && hass.states[e.entity_id] && !AREA_SKIP.has(e.entity_id.split(".")[0]))
+    .filter((e) => (e.area_id || hass.devices?.[e.device_id]?.area_id) === area)
+    .map((e) => e.entity_id)
+    .sort((a, b) => rank(a) - rank(b) || name(a).localeCompare(name(b)));
+};
+
+class FloorplanAreaPopup extends HTMLElement {
+  setup(card, area, title, onClose) {
+    this._card = card;
+    this._area = area;
+    this._title = title;
+    this._onClose = onClose;
+    this._onKey = (ev) => ev.key === "Escape" && this.close();
+  }
+
+  connectedCallback() {
+    document.addEventListener("keydown", this._onKey);
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener("keydown", this._onKey);
+    this._onClose?.();
+  }
+
+  close() {
+    this.remove();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    const ids = areaEntities(hass, this._area);
+    // Only redraw when one of the shown entities changed.
+    const states = ids.map((id) => hass.states[id]);
+    if (this._last && states.length === this._last.length && states.every((st, i) => st === this._last[i])) return;
+    this._last = states;
+    this._render(ids);
+  }
+
+  _render(ids) {
+    const hass = this._hass;
+    const lang = langOf(hass);
+    const area = hass.areas?.[this._area];
+    const title = this._title || area?.name || this._area;
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: "open" });
+      this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
+    }
+    // Names without the area in front, as in Home Assistant.
+    const short = (id) => {
+      const n = hass.states[id].attributes.friendly_name || id;
+      const prefix = area?.name ? area.name + " " : "";
+      return prefix && n.startsWith(prefix) && n.length > prefix.length ? n.slice(prefix.length) : n;
+    };
+    const rows = ids.map((id) => {
+      const st = hass.states[id];
+      const on = st.state === "on";
+      const ctrl = TOGGLE_DOMAINS.has(id.split(".")[0]) && st.state !== "unavailable"
+        ? `<button class="sw${on ? " on" : ""}" role="switch" aria-checked="${on}" aria-label="${esc(short(id))}" data-toggle="${esc(id)}"><span></span></button>`
+        : `<span class="v">${esc(elementValue(hass, st))}</span>`;
+      return `<div class="row" data-entity="${esc(id)}"><ha-state-icon class="${on ? "active" : ""}" data-entity="${esc(id)}"></ha-state-icon>
+        <span class="n">${esc(short(id))}</span>${ctrl}</div>`;
+    });
+    this.shadowRoot.innerHTML = `<style>${FloorplanAreaPopup.styles}</style>
+      <div class="backdrop"></div>
+      <div class="box" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <div class="head">${area?.icon ? `<ha-icon icon="${esc(area.icon)}"></ha-icon>` : ""}<b>${esc(title)}</b>
+          <button class="x" aria-label="${esc(t("close", {}, lang))}" title="${esc(t("close", {}, lang))}"><ha-icon icon="mdi:close"></ha-icon></button></div>
+        <div class="list">${rows.join("") || `<div class="empty">${esc(t("area_empty", {}, lang))}</div>`}</div>
+      </div>`;
+    this.shadowRoot.querySelectorAll("ha-state-icon").forEach((node) => {
+      node.hass = hass;
+      node.stateObj = hass.states[node.dataset.entity];
+    });
+  }
+
+  _onClick(ev) {
+    const path = ev.composedPath();
+    if (path.some((n) => n.classList?.contains("x") || n.classList?.contains("backdrop"))) return this.close();
+    const sw = path.find((n) => n.dataset?.toggle);
+    if (sw) return this._hass.callService("homeassistant", "toggle", { entity_id: sw.dataset.toggle });
+    const row = path.find((n) => n.dataset?.entity && n.classList?.contains("row"));
+    if (!row) return;
+    // The details dialog of Home Assistant takes over.
+    const card = this._card;
+    this.close();
+    card.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: row.dataset.entity } }));
+  }
+}
+
+FloorplanAreaPopup.styles = `
+  :host { position: fixed; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; font-family: var(--ha-font-family-body, Roboto, sans-serif); }
+  .backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .5); }
+  .box {
+    position: relative; width: min(420px, calc(100vw - 32px)); max-height: 80vh; display: flex; flex-direction: column;
+    background: var(--card-background-color, var(--ha-card-background, #1c1c1c)); color: var(--primary-text-color);
+    border-radius: var(--ha-dialog-border-radius, 24px); box-shadow: 0 8px 32px rgba(0, 0, 0, .4); overflow: hidden;
+  }
+  .head { display: flex; align-items: center; gap: 10px; padding: 16px 12px 12px 20px; font-size: 20px; }
+  .head b { flex: 1; font-weight: 500; }
+  .x { border: none; background: none; color: inherit; cursor: pointer; padding: 8px; border-radius: 50%; display: inline-flex; }
+  .x:hover { background: color-mix(in srgb, var(--primary-text-color) 8%, transparent); }
+  .list { overflow-y: auto; padding: 0 8px 12px; }
+  .row { display: flex; align-items: center; gap: 14px; padding: 8px 12px; border-radius: 12px; cursor: pointer; min-height: 40px; }
+  .row:hover { background: color-mix(in srgb, var(--primary-text-color) 6%, transparent); }
+  .row ha-state-icon { color: var(--state-icon-color, var(--paper-item-icon-color)); flex: none; }
+  .row ha-state-icon.active { color: var(--state-active-color, #fdd835); }
+  .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .v { color: var(--secondary-text-color); white-space: nowrap; }
+  .sw {
+    flex: none; width: 40px; height: 22px; border-radius: 11px; border: none; padding: 0; cursor: pointer; position: relative;
+    background: color-mix(in srgb, var(--primary-text-color) 25%, transparent); transition: background .2s;
+  }
+  .sw span { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .2s; }
+  .sw.on { background: var(--primary-color); }
+  .sw.on span { left: 21px; }
+  .empty { padding: 8px 12px 16px; color: var(--secondary-text-color); }
 `;
 
 /* ------------------------------------------------------------------------------------------------
@@ -1666,7 +1869,8 @@ class FloorplanCardEditor extends HTMLElement {
        <datalist id="fp-entities">${this._entityOptions(k)}</datalist>`;
     const rows = [];
     if (k === "room") {
-      rows.push(field("name", this._t("name"), item.name));
+      const areaName = item.area && this._hass?.areas?.[item.area]?.name;
+      rows.push(field("name", this._t("name"), item.name, areaName ? `placeholder="${esc(areaName)}"` : ""));
       rows.push(`<label><span>${esc(this._t("type"))}</span><select data-field="type">
         ${["room", "outdoor", "zone"].map((v) => `<option value="${v}"${(item.type || "room") === v ? " selected" : ""}>${esc(this._t("type_" + v))}</option>`).join("")}
         </select></label>`);
@@ -1674,7 +1878,18 @@ class FloorplanCardEditor extends HTMLElement {
         const mixed = item.radii ? ` placeholder="${esc(this._t("corner_radius_mixed"))}"` : "";
         rows.push(field("radius", this._t("corner_radius"), item.radius, `type="number" min="0" step="${this._grid}"${mixed}`));
       }
-      rows.push(field("navigation_path", this._t("navigation"), item.navigation_path, `placeholder="/dashboard/room"`));
+      const areas = Object.values(this._hass?.areas || {}).sort((a, b) => a.name.localeCompare(b.name));
+      if (item.area && !areas.some((a) => a.area_id === item.area)) areas.push({ area_id: item.area, name: item.area });
+      rows.push(`<label><span>${esc(this._t("area"))}</span><select data-field="area">
+        <option value="">${esc(this._t("area_none"))}</option>
+        ${areas.map((a) => `<option value="${esc(a.area_id)}"${item.area === a.area_id ? " selected" : ""}>${esc(a.name)}</option>`).join("")}
+        </select></label>`);
+      const tap = tapChoice(item.tap_action);
+      const taps = ["", "none", "more-info", "navigate", "area", ...(tap === "yaml" ? ["yaml"] : [])];
+      rows.push(`<label><span>${esc(this._t("tap"))}</span><select data-field="tap">
+        ${taps.map((v) => `<option value="${v}"${tap === v ? " selected" : ""}>${esc(this._t("tap_" + (v || "auto")))}</option>`).join("")}
+        </select></label>`);
+      if (tap === "" || tap === "navigate") rows.push(field("navigation_path", this._t("dashboard_path"), item.navigation_path, `placeholder="/dashboard/room"`));
       rows.push(entityField());
     } else if (k === "window" || k === "radiator") {
       rows.push(field("name", this._t("name"), item.name));
@@ -2748,6 +2963,16 @@ class FloorplanCardEditor extends HTMLElement {
       } else if (key === "steps") {
         if (value === "") delete item.steps;
         else item.steps = Math.max(2, Math.round(Number(value)));
+      } else if (key === "tap") {
+        if (value === "") delete item.tap_action;
+        else if (value !== "yaml") item.tap_action = { action: value };
+      } else if (key === "area") {
+        if (value === "") delete item.area;
+        else {
+          item.area = value;
+          // A generated name ("Room 3") gives way to the name of the area.
+          if (/^(Room|Raum) \d+$/.test(item.name || "")) delete item.name;
+        }
       } else if (key === "type" && (value === "room" || value === "icon")) {
         delete item.type;
       } else if (value === "") {
@@ -2876,6 +3101,7 @@ FloorplanCardEditor.styles = `
 `;
 
 customElements.define("floorplan-card", FloorplanCard);
+customElements.define("floorplan-area-popup", FloorplanAreaPopup);
 customElements.define("floorplan-card-editor", FloorplanCardEditor);
 
 window.customCards = window.customCards || [];
