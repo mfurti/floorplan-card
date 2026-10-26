@@ -6,8 +6,6 @@ plan right in the dashboard: no SVG editor, no image, no YAML needed.
 
 ![Floorplan Card showing an apartment with rooms, windows, doors, radiators, stairs and live sensor values](https://github.com/user-attachments/assets/620d6d16-221d-41af-91cd-7621b45644a4)
 
-*Deutsch: [siehe unten](#deutsch).*
-
 ## Features
 
 - Rooms as rectangles, polygons or circles/ellipses, with rounded corners and arc walls
@@ -18,6 +16,7 @@ plan right in the dashboard: no SVG editor, no image, no YAML needed.
 - Choose per room what a click does: nothing, entity details, open a dashboard or show the area
 - Click a window or radiator for its details
 - Colors follow your Home Assistant theme
+- Editor in English and German, following the Home Assistant language
 - Visual editor with a CAD-like ribbon: grid, ortho and wall snap, undo, zoom, full screen
 - Trace a template: upload a photo or scan of your floor plan, set its scale with two points and draw on top
 
@@ -111,41 +110,3 @@ trace_image:
 ## License
 
 MIT
-
----
-
-## Deutsch
-
-Eine Lovelace-Karte für Home Assistant, die einen Grundriss aus Koordinaten zeichnet – Räume, Fenster, Türen,
-Heizkörper und Treppen – und sie nach dem Zustand der Entitäten einfärbt. Mit eingebautem grafischen Editor:
-Der Grundriss wird direkt im Dashboard gezeichnet, ohne SVG-Programm, Bild oder YAML.
-
-**Funktionen:** Räume als Rechteck, Vieleck oder Kreis/Ellipse, mit abgerundeten Ecken und Bogenwänden ·
-Fenster in der Farbe ihres Kontakts (offen: rot und pulsierend, zu: grün) · Türen mit Aufschlag, Heizkörper
-zeigen, wenn sie heizen, Treppen mit Laufrichtung · Symbole und Werte beliebiger Entitäten, Beschriftungen ·
-Räume mit einem HA-Bereich verknüpfen: Ein Klick zeigt dessen Geräte im Popup (Lichter schalten, Werte sehen) · pro Raum wählbar, was ein Klick tut (nichts, Details der Entität, Dashboard öffnen, Bereich anzeigen) · Farben aus dem HA-Theme · Editor mit Ribbon wie in CAD-Programmen:
-Raster, Ortho, Wandfang, Rückgängig, Zoom, Vollbild · Vorlage nachzeichnen: Foto oder Scan des Grundrisses
-hochladen, Maßstab über zwei Punkte setzen und darauf zeichnen.
-
-**Raum anklicken:** In den Eigenschaften des Raums *Bereich* und *Beim Antippen* wählen. Ohne eigene Wahl
-öffnet ein Klick das Dashboard (`navigation_path`), sonst den Bereich (`area`), sonst die Details der Entität.
-Ein Raum ohne Namen zeigt den Namen des Bereichs. Schlüssel siehe Tabelle *Clicking a room* oben.
-
-**Vorlage nachzeichnen:** Im Editor den Reiter *Vorlage* (ganz vorne) öffnen und ein Foto oder einen Scan des
-Grundrisses hochladen (JPG, PNG oder GIF, bis 10 MB) oder auf die Zeichenfläche ziehen. Die Einheit des Plans
-festlegen (m, cm oder mm), dann den Maßstab einzeichnen: zwei Punkte anklicken, deren echten Abstand du kennst
-(z. B. beide Enden einer Wand), und den Abstand eingeben – das Bild passt sich an. Verschieben, drehen, Deckkraft und Ausblenden nach Bedarf, dann die Räume darauf
-nachzeichnen. Das Bild ist nur im Editor zu sehen, nie in der Karte (Schlüssel `trace_image`, siehe oben).
-
-**Installation über HACS (empfohlen):** Den Button *Open in HACS* oben anklicken oder in HACS unter
-*⋮ → Benutzerdefinierte Repositories* `https://github.com/mfurti/floorplan-card` mit dem Typ *Dashboard* eintragen,
-*Floorplan Card* herunterladen und den Browser neu laden. Neue Versionen erscheinen dann als Update in Home Assistant.
-
-**Installation von Hand:** `floorplan-card.js` aus dem [neuesten Release](https://github.com/mfurti/floorplan-card/releases/latest)
-nach `/config/www/floorplan-card/` kopieren, unter *Einstellungen → Dashboards → ⋮ → Ressourcen* als
-*JavaScript-Modul* mit der URL `/local/floorplan-card/floorplan-card.js` eintragen, dann eine Karte hinzufügen und
-*Floorplan Card* wählen. Zum Aktualisieren die Datei ersetzen und die URL der Ressource ändern
-(z. B. `…/floorplan-card.js?v=0.9.1`), damit der Browser die neue Version lädt.
-
-Das Beispiel oben gilt genauso; die Konfiguration ist englisch, die Oberfläche passt sich der Sprache von
-Home Assistant an (Deutsch und Englisch).
