@@ -23,10 +23,27 @@ plan right in the dashboard: no SVG editor, no image, no YAML needed.
 
 ## Installation
 
-1. Copy `floorplan-card.js` to `/config/www/floorplan-card/`.
+### HACS (recommended)
+
+[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mfurti&repository=floorplan-card&category=plugin)
+
+1. Click the button above, or in HACS open *⋮ → Custom repositories*, add `https://github.com/mfurti/floorplan-card`
+   with type *Dashboard*.
+2. Download *Floorplan Card* and reload the browser when HACS asks.
+3. Add a card, search for *Floorplan Card* and start drawing.
+
+HACS shows new versions as updates in Home Assistant.
+
+### Manual
+
+1. Download `floorplan-card.js` from the [latest release](https://github.com/mfurti/floorplan-card/releases/latest)
+   and copy it to `/config/www/floorplan-card/`.
 2. Add it as a dashboard resource: *Settings → Dashboards → ⋮ → Resources*,
    URL `/local/floorplan-card/floorplan-card.js`, type *JavaScript module*.
 3. Add a card, search for *Floorplan Card* and start drawing.
+
+To update, replace the file and change the resource URL (e.g. `…/floorplan-card.js?v=0.9.0`) so browsers load the
+new version. The browser console shows the running version (`FLOORPLAN-CARD 0.9.0`).
 
 ## Example
 
@@ -122,9 +139,15 @@ festlegen (m, cm oder mm), dann den Maßstab einzeichnen: zwei Punkte anklicken,
 (z. B. beide Enden einer Wand), und den Abstand eingeben – das Bild passt sich an. Verschieben, drehen, Deckkraft und Ausblenden nach Bedarf, dann die Räume darauf
 nachzeichnen. Das Bild ist nur im Editor zu sehen, nie in der Karte (Schlüssel `trace_image`, siehe oben).
 
-**Installation:** `floorplan-card.js` nach `/config/www/floorplan-card/` kopieren, unter
-*Einstellungen → Dashboards → ⋮ → Ressourcen* als *JavaScript-Modul* mit der URL
-`/local/floorplan-card/floorplan-card.js` eintragen, dann eine Karte hinzufügen und *Floorplan Card* wählen.
+**Installation über HACS (empfohlen):** Den Button *Open in HACS* oben anklicken oder in HACS unter
+*⋮ → Benutzerdefinierte Repositories* `https://github.com/mfurti/floorplan-card` mit dem Typ *Dashboard* eintragen,
+*Floorplan Card* herunterladen und den Browser neu laden. Neue Versionen erscheinen dann als Update in Home Assistant.
+
+**Installation von Hand:** `floorplan-card.js` aus dem [neuesten Release](https://github.com/mfurti/floorplan-card/releases/latest)
+nach `/config/www/floorplan-card/` kopieren, unter *Einstellungen → Dashboards → ⋮ → Ressourcen* als
+*JavaScript-Modul* mit der URL `/local/floorplan-card/floorplan-card.js` eintragen, dann eine Karte hinzufügen und
+*Floorplan Card* wählen. Zum Aktualisieren die Datei ersetzen und die URL der Ressource ändern
+(z. B. `…/floorplan-card.js?v=0.9.0`), damit der Browser die neue Version lädt.
 
 Das Beispiel oben gilt genauso; die Konfiguration ist englisch, die Oberfläche passt sich der Sprache von
 Home Assistant an (Deutsch und Englisch).
