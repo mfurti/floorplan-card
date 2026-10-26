@@ -8,7 +8,7 @@
  * License: MIT
  */
 
-const VERSION = "0.8.0";
+const VERSION = "0.8.1";
 
 const STRINGS = {
   en: {
@@ -70,7 +70,7 @@ const STRINGS = {
     ortho: "Ortho",
     ortho_title: "Right angles: walls only horizontal or vertical",
     wall_snap: "Wall snap",
-    wall_snap_title: "Windows, doors and radiators always sit on the nearest wall, stairs fit flush against walls",
+    wall_snap_title: "Room corners snap to walls and corners nearby (also off the grid), windows, doors and radiators always sit on the nearest wall, stairs fit flush against walls",
     hint_select: "Click an object to select it, drag to move it. Drag on empty space to select several objects (Shift adds).",
     header_draw: "Draw",
     zoom_in: "Zoom in",
@@ -211,7 +211,7 @@ const STRINGS = {
     ortho: "Ortho",
     ortho_title: "Rechtwinklig: Wände nur waagrecht oder senkrecht",
     wall_snap: "Wandfang",
-    wall_snap_title: "Fenster, Türen und Heizkörper sitzen immer an der nächsten Wand, Treppen schließen bündig an Wände an",
+    wall_snap_title: "Raumecken rasten an Wänden und Ecken in der Nähe ein (auch neben dem Raster), Fenster, Türen und Heizkörper sitzen immer an der nächsten Wand, Treppen schließen bündig an Wände an",
     hint_select: "Objekt anklicken zum Auswählen, ziehen zum Verschieben. Auf freier Fläche ziehen wählt mehrere Objekte aus (Umschalt: hinzufügen).",
     header_draw: "Zeichnen",
     zoom_in: "Vergrößern",
@@ -1363,7 +1363,7 @@ class FloorplanCardEditor extends HTMLElement {
   _renderCoords() {
     const el = this.shadowRoot.querySelector(".coords");
     if (!el) return;
-    const p = this._cursor && this._snap(this._cursor);
+    const p = this._cursor && (this._mode.startsWith("room-") ? this._snapFor(this._mode, this._cursor) : this._snap(this._cursor));
     el.textContent = p ? `x ${p[0]}   y ${p[1]}${this._unit ? "   " + this._unit : ""}` : "";
   }
 
@@ -1524,6 +1524,18 @@ class FloorplanCardEditor extends HTMLElement {
         const [a, b] = w.axis === 0 ? [[w.at, w.lo], [w.at, w.hi]] : [[w.lo, w.at], [w.hi, w.at]];
         out.push(`<line class="wallhl" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" style="stroke-width:${Math.max(7 * uc, 4 * u)}"/>`);
       }
+    }
+
+    // Rooms: highlight the corner or walls the next corner snaps to.
+    if (this._mode.startsWith("room-") && this._cursor) {
+      const hit = this._snapRoom(this._cursor, this._mode === "room-poly" ? this._draft[this._draft.length - 1] : null);
+      for (const w of hit.walls) {
+        const [a, b] = w.axis === 0 ? [[w.at, w.lo], [w.at, w.hi]] : [[w.lo, w.at], [w.hi, w.at]];
+        out.push(`<line class="wallhl" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" style="stroke-width:${Math.max(7 * uc, 4 * u)}"/>`);
+      }
+      if (hit.wall) out.push(`<polyline class="wallhl" points="${hit.wall.map(fmt).join(" ")}" style="stroke-width:${Math.max(7 * uc, 4 * u)}"/>`);
+      for (const c of hit.guides) out.push(`<line class="guide" x1="${c[0]}" y1="${c[1]}" x2="${hit.q[0]}" y2="${hit.q[1]}" style="stroke-width:${u};stroke-dasharray:${4 * u} ${3 * u}"/>`);
+      if (hit.corner) out.push(`<circle class="wallhl" fill="none" cx="${hit.corner[0]}" cy="${hit.corner[1]}" r="${2 * r}" style="stroke-width:${2 * u}"/>`);
     }
 
     if (this._mode === "room-ellipse" && this._pending && cur) {
@@ -1741,10 +1753,11 @@ class FloorplanCardEditor extends HTMLElement {
     return [round(Math.round(p[0] / g) * g), round(Math.round(p[1] / g) * g)];
   }
 
-  _nearestWall(p) {
+  _nearestWall(p, skip = -1) {
     let best = null;
     let bestD = Infinity;
-    for (const room of this._config.rooms || []) {
+    for (const [ri, room] of (this._config.rooms || []).entries()) {
+      if (ri === skip) continue;
       for (const piece of roomGeometry(room)?.pieces || []) {
         for (let k = 0; k < piece.pts.length - 1; k++) {
           const [a, b] = [piece.pts[k], piece.pts[k + 1]];
@@ -1752,7 +1765,7 @@ class FloorplanCardEditor extends HTMLElement {
           const d = Math.hypot(q[0] - p[0], q[1] - p[1]);
           if (d < bestD) {
             bestD = d;
-            best = { q, a, b, piece: piece.pts };
+            best = { q, a, b, d, piece: piece.pts };
           }
         }
       }
@@ -1865,8 +1878,99 @@ class FloorplanCardEditor extends HTMLElement {
     }
     if (mode === "stairs") return this._snapNearWalls(p).q;
     // Polygon room with ortho: continue horizontally or vertically from the last corner.
-    if (mode === "room-poly") return this._orthoFrom(this._draft[this._draft.length - 1], this._snap(p));
+    if (mode === "room-poly") return this._snapRoom(p, this._draft[this._draft.length - 1]).q;
+    if (mode.startsWith("room-")) return this._snapRoom(p).q;
     return this._snap(p);
+  }
+
+  // How far room corners reach for corners and walls nearby: about 12 px on screen.
+  get _roomLim() {
+    return 12 * unitOf(this._vb);
+  }
+
+  // Corner of a room: with wall snap onto corners and walls nearby, even if they are off the grid; otherwise on the grid.
+  // "from" is the previous corner (for ortho), "skip" the room being edited. Returns { q, walls, corner } for highlighting.
+  _snapRoom(p, from = null, skip = -1) {
+    const grid = this._snap(p);
+    const res = { q: this._orthoFrom(from, grid), walls: [], corner: null, guides: [] };
+    if (!this._wallSnap) return res;
+    const lim = this._roomLim;
+    const corners = (this._config.rooms || [])
+      .flatMap((room, ri) => (ri === skip || isRect(room.ellipse) ? [] : roomPoints(room) || []))
+      .concat(this._draft || []);
+    const walls = this._axisWalls(skip);
+    // Alignment: a coordinate close to that of a corner (about 6 px) takes it over, shown as a guide line.
+    const align = (axis) => {
+      let bc = null;
+      let bd = lim / 2;
+      for (const c of corners) {
+        const d = Math.abs(p[axis] - c[axis]);
+        if (d < bd) [bd, bc] = [d, c];
+      }
+      if (bc) {
+        res.q[axis] = round(bc[axis]);
+        res.guides.push(bc);
+      }
+    };
+
+    // Ortho: only the free coordinate can snap, to a crossing wall or a corner on the line.
+    if (this._ortho && from) {
+      const ax = Math.abs(grid[0] - from[0]) >= Math.abs(grid[1] - from[1]) ? 0 : 1;
+      const line = from[1 - ax];
+      let best = null;
+      let bestD = lim;
+      for (const w of walls) {
+        if (w.axis !== ax || line < w.lo - lim || line > w.hi + lim) continue;
+        const d = Math.abs(p[ax] - w.at);
+        if (d < bestD) [bestD, best] = [d, { at: w.at, wall: w }];
+      }
+      for (const c of corners) {
+        const d = Math.abs(p[ax] - c[ax]);
+        if (Math.abs(c[1 - ax] - line) < 1e-9 && d < bestD) [bestD, best] = [d, { at: c[ax], corner: c }];
+      }
+      if (best) {
+        res.q[ax] = round(best.at);
+        if (best.wall) res.walls.push(best.wall);
+        else res.corner = best.corner;
+      } else align(ax);
+      return res;
+    }
+
+    // 1. Corners of other rooms and of the room being drawn.
+    let best = null;
+    let bestD = lim;
+    for (const c of corners) {
+      const d = Math.hypot(c[0] - p[0], c[1] - p[1]);
+      if (d < bestD) [bestD, best] = [d, c];
+    }
+    if (best) return { q: [round(best[0]), round(best[1])], walls: [], corner: best };
+
+    // 2. Straight horizontal and vertical walls, per axis (near a corner onto both).
+    for (const axis of [0, 1]) {
+      let bw = null;
+      let bd = lim;
+      for (const w of walls) {
+        if (w.axis !== axis || p[1 - axis] < w.lo - lim || p[1 - axis] > w.hi + lim) continue;
+        const d = Math.abs(p[axis] - w.at);
+        if (d < bd) [bd, bw] = [d, w];
+      }
+      if (bw) {
+        res.q[axis] = round(bw.at);
+        res.walls.push(bw);
+      }
+    }
+
+    // 3. Sloped and curved walls: onto the wall line.
+    const wall = !res.walls.length && this._nearestWall(p, skip);
+    if (wall && wall.d < lim) {
+      res.q = [round(wall.q[0]), round(wall.q[1])];
+      res.wall = wall.piece;
+      return res;
+    }
+
+    // 4. Axes without a wall: alignment with corners.
+    for (const axis of [0, 1]) if (!res.walls.some((w) => w.axis === axis)) align(axis);
+    return res;
   }
 
   // With ortho, q moves onto the horizontal or vertical line through "from".
@@ -1881,9 +1985,9 @@ class FloorplanCardEditor extends HTMLElement {
   }
 
   // Straight horizontal and vertical walls as { axis, at, lo, hi }: axis 0 is a vertical wall at x = at from y lo to hi.
-  _axisWalls() {
-    return (this._config.rooms || []).flatMap((room) =>
-      (roomGeometry(room)?.pieces || []).flatMap((pc) => {
+  _axisWalls(skip = -1) {
+    return (this._config.rooms || []).flatMap((room, ri) =>
+      (ri === skip ? [] : roomGeometry(room)?.pieces || []).flatMap((pc) => {
         if (pc.pts.length !== 2) return [];
         const [a, b] = pc.pts;
         const axis = Math.abs(a[0] - b[0]) < 1e-9 ? 0 : Math.abs(a[1] - b[1]) < 1e-9 ? 1 : -1;
@@ -2081,7 +2185,7 @@ class FloorplanCardEditor extends HTMLElement {
 
     if (this._mode === "room-poly") {
       const first = this._draft[0];
-      const raw = this._snap(p); // closing is checked without the ortho constraint
+      const raw = this._snapRoom(p).q; // closing is checked without the ortho constraint
       if (first && this._draft.length >= 3 && Math.hypot(raw[0] - first[0], raw[1] - first[1]) < this._grid / 2) {
         this._finishRoom();
         return;
@@ -2216,7 +2320,7 @@ class FloorplanCardEditor extends HTMLElement {
       else if (d.part === "v") {
         const pts = roomPoints(o).map((pt) => [...pt]);
         const old = pts[d.v];
-        const nw = this._snap(p);
+        const nw = this._snapRoom(p, null, d.index).q;
         if (this._ortho) {
           // Keep right angles: neighbours on the same horizontal/vertical wall move along.
           for (const n of [(d.v - 1 + pts.length) % pts.length, (d.v + 1) % pts.length]) {
@@ -2730,6 +2834,7 @@ FloorplanCardEditor.styles = `
   .drafts .shapepreview { fill: color-mix(in srgb, var(--primary-color) 12%, transparent); stroke: var(--primary-color); stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; stroke-width: 2px; }
   .drafts .wallpreview { fill: none; stroke: var(--fp-wall); stroke-linejoin: round; stroke-linecap: round; }
   .drafts .wallhl { stroke: var(--primary-color); stroke-opacity: .45; stroke-linecap: round; }
+  .drafts .guide { stroke: var(--primary-color); stroke-opacity: .7; }
   .drafts .winpreview { stroke: var(--fp-window); stroke-opacity: .8; }
   .drafts .doorpreview { fill: color-mix(in srgb, var(--primary-color) 12%, transparent); stroke: var(--primary-color); }
   .drafts .radpreview { fill: color-mix(in srgb, var(--fp-radiator) 40%, transparent); stroke: var(--fp-radiator); }
