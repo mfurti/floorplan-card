@@ -4,6 +4,8 @@ A Lovelace card for Home Assistant that draws a floor plan from plain coordinate
 radiators and stairs – and colors them by entity state. It comes with a visual editor, so you can draw the
 plan right in the dashboard: no SVG editor, no image, no YAML needed.
 
+![Floorplan Card showing an apartment with rooms, windows, doors, radiators, stairs and live sensor values](images/screenshot.png)
+
 *Deutsch: [siehe unten](#deutsch).*
 
 ## Features
@@ -86,6 +88,8 @@ MIT
 Eine Lovelace-Karte für Home Assistant, die einen Grundriss aus Koordinaten zeichnet – Räume, Fenster, Türen,
 Heizkörper und Treppen – und sie nach dem Zustand der Entitäten einfärbt. Mit eingebautem grafischen Editor:
 Der Grundriss wird direkt im Dashboard gezeichnet, ohne SVG-Programm, Bild oder YAML.
+
+![Floorplan Card mit einer Wohnung: Räume, Fenster, Türen, Heizkörper, Treppe und Live-Werte von Sensoren](images/screenshot.png)
 
 **Funktionen:** Räume als Rechteck, Vieleck oder Kreis/Ellipse, mit abgerundeten Ecken und Bogenwänden ·
 Fenster in der Farbe ihres Kontakts (offen: rot und pulsierend, zu: grün) · Türen mit Aufschlag, Heizkörper
