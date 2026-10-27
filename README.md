@@ -43,8 +43,8 @@ HACS shows new versions as updates in Home Assistant.
    URL `/local/floorplan-card/floorplan-card.js`, type *JavaScript module*.
 3. Add a card, search for *Floorplan Card* and start drawing.
 
-To update, replace the file and change the resource URL (e.g. `…/floorplan-card.js?v=0.9.2`) so browsers load the
-new version. The browser console shows the running version (`FLOORPLAN-CARD 0.9.2`).
+To update, replace the file and change the resource URL (e.g. `…/floorplan-card.js?v=0.9.3`) so browsers load the
+new version. The browser console shows the running version (`FLOORPLAN-CARD 0.9.3`).
 
 ## Example
 

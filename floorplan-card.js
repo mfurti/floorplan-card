@@ -8,7 +8,7 @@
  * License: MIT
  */
 
-const VERSION = "0.9.2";
+const VERSION = "0.9.3";
 
 const STRINGS = {
   en: {
@@ -57,6 +57,7 @@ const STRINGS = {
     panel_zoom: "Zoom",
     panel_display: "Display",
     panel_feedback: "Feedback",
+    show_properties: "Properties ↓",
     report_bug: "Report a problem",
     suggest_feature: "Suggest an idea",
     hint_label: "Click where the text should go, then type it below.",
@@ -213,6 +214,7 @@ const STRINGS = {
     panel_zoom: "Zoom",
     panel_display: "Darstellung",
     panel_feedback: "Feedback",
+    show_properties: "Eigenschaften ↓",
     report_bug: "Problem melden",
     suggest_feature: "Idee vorschlagen",
     hint_label: "Dorthin klicken, wo der Text hin soll, dann unten eintippen.",
@@ -1390,12 +1392,15 @@ class FloorplanCardEditor extends HTMLElement {
         <div class="ribbon"></div>
       </div>
       <div class="hint"></div>
-      <div class="canvas" tabindex="0">
-        <svg></svg>
-        <div class="overlay"></div>
+      <div class="work">
+        <div class="canvas" tabindex="0">
+          <svg></svg>
+          <div class="overlay"></div>
+        </div>
+        <div class="statusbar"><span class="coords"></span><span class="nav">${esc(this._t("nav_hint"))}</span>
+          <button class="jump" hidden>${esc(this._t("show_properties"))}</button></div>
+        <div class="panel"></div>
       </div>
-      <div class="statusbar"><span class="coords"></span><span class="nav">${esc(this._t("nav_hint"))}</span></div>
-      <div class="panel"></div>
       <input type="file" class="tracefile" accept="${TRACE_TYPES.join(",")}" hidden>`;
     this._svg = this.shadowRoot.querySelector("svg");
     const canvas = this.shadowRoot.querySelector(".canvas");
@@ -1475,6 +1480,14 @@ class FloorplanCardEditor extends HTMLElement {
       else return;
       this._renderCanvas();
     });
+    // Below the drawing area the properties are easy to miss: offer a jump there while they are out of sight.
+    const panel = this.shadowRoot.querySelector(".panel");
+    this.shadowRoot.querySelector(".jump").addEventListener("click", () => panel.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+    if (typeof IntersectionObserver === "function")
+      new IntersectionObserver(([entry]) => {
+        this._panelInView = entry.isIntersecting;
+        this._renderJump();
+      }).observe(panel);
     this.shadowRoot.querySelector(".panel").addEventListener("change", (ev) => this._onPanelChange(ev));
     this.shadowRoot.querySelector(".panel").addEventListener("click", (ev) => this._onPanelClick(ev));
     this.shadowRoot.querySelector(".panel").addEventListener("keydown", (ev) => {
@@ -1498,6 +1511,24 @@ class FloorplanCardEditor extends HTMLElement {
     });
     this._fitView();
     this._renderAll();
+    setTimeout(() => this._enlargeDialog());
+  }
+
+  // Open HA's card editor dialog in its large size (as a click on its title does), once per dialog.
+  _enlargeDialog() {
+    const dialog = this._dialog;
+    if (dialog && "large" in dialog && !dialog.large) dialog.large = true;
+  }
+
+  get _dialog() {
+    let node = this;
+    while (node && node.localName !== "hui-dialog-edit-card") node = node.parentNode || node.host;
+    return node;
+  }
+
+  _renderJump() {
+    const jump = this.shadowRoot?.querySelector(".jump");
+    if (jump) jump.hidden = !this._sels.length || this._panelInView !== false;
   }
 
   _renderAll() {
@@ -1699,6 +1730,17 @@ class FloorplanCardEditor extends HTMLElement {
         <image href="${esc(img.url)}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="none" style="opacity:${traceOpacity(img)}"/>${frame}</g>`;
     }
 
+    // Editor only: which rooms are linked to a Home Assistant area, below the room name.
+    const areaTags = (c.rooms || [])
+      .map((room) => {
+        if (!room.area || !roomGeometry(room)) return "";
+        const [x, y] = roomCenter(room);
+        const name = this._hass?.areas?.[room.area]?.name || room.area;
+        const dy = room.label === false || !roomName(room, this._hass) ? 0 : 9 * uc + 9 * u;
+        return `<text x="${x}" y="${y + dy}" style="font-size:${11 * u}px">🔗 ${esc(name)}</text>`;
+      })
+      .join("");
+
     this._svg.setAttribute("viewBox", vb.join(" "));
     this._svg.classList.toggle("drawing", this._mode !== "select");
     this._svg.classList.toggle("tracing", Boolean(img));
@@ -1707,6 +1749,7 @@ class FloorplanCardEditor extends HTMLElement {
       ${trace}
       <g class="gridlines" style="stroke-width:${0.6 * u}">${lines.join("")}</g>
       ${planMarkup(c, this._hass, cardViewBox(c), this._lang)}
+      <g class="areatags">${areaTags}</g>
       <g class="handles" style="stroke-width:${1.5 * u}">${handles.join("")}</g>
       <g class="drafts">${this._draftMarkup(u, uc, r)}</g>`;
 
@@ -1871,6 +1914,7 @@ class FloorplanCardEditor extends HTMLElement {
   }
 
   _renderPanel() {
+    this._renderJump();
     const panel = this.shadowRoot.querySelector(".panel");
     if (this._sels.length > 1) {
       panel.innerHTML = `<div class="head"><b>${esc(this._t("n_selected", { n: this._sels.length }))}</b>
@@ -2795,8 +2839,7 @@ class FloorplanCardEditor extends HTMLElement {
   // A card that is being added has none that can run twice: there HA's own Save runs (and closes the dialog).
   async _save() {
     if (this._saveState === "saving") return;
-    let node = this;
-    while (node && node.localName !== "hui-dialog-edit-card") node = node.parentNode || node.host;
+    const node = this._dialog;
     const params = node?._params;
     if (typeof params?.saveCardConfig !== "function" || params.isNew || !node._cardConfig) {
       if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
@@ -3011,7 +3054,7 @@ class FloorplanCardEditor extends HTMLElement {
 }
 
 FloorplanCardEditor.styles = `
-  :host { display: block; ${THEME_VARS} }
+  :host { display: block; container: fp-editor / inline-size; ${THEME_VARS} }
   button {
     display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 8px; cursor: pointer;
     border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-text-color); font: inherit; font-size: 13px;
@@ -3060,6 +3103,16 @@ FloorplanCardEditor.styles = `
   .canvas:focus-visible { border-color: var(--primary-color); }
   .statusbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 4px 0 8px; font-size: 11px; color: var(--secondary-text-color); }
   .statusbar .coords { font: 12px monospace; min-width: 9em; }
+  .statusbar .jump { margin-left: auto; padding: 2px 10px; font-size: 12px; color: var(--primary-color); border-color: var(--primary-color); }
+  .areatags text { fill: var(--primary-color); text-anchor: middle; dominant-baseline: central; pointer-events: none; font-family: var(--ha-font-family-body, Roboto, sans-serif); }
+  .work { display: grid; grid-template-columns: minmax(0, 1fr); }
+  /* Wide enough: properties beside the drawing area, as in full screen. */
+  @container fp-editor (min-width: 640px) {
+    .work { grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); column-gap: 12px; }
+    .canvas { grid-column: 1; grid-row: 1; }
+    .statusbar { grid-column: 1; grid-row: 2; }
+    .panel { grid-column: 2; grid-row: 1 / span 2; align-self: start; max-height: min(65vh, 640px); overflow: auto; }
+  }
   svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; }
   svg.drawing { cursor: crosshair; }
   .gridlines line { stroke: var(--divider-color); }
@@ -3116,13 +3169,13 @@ FloorplanCardEditor.styles = `
     background: var(--secondary-background-color, transparent); color: var(--primary-text-color);
   }
   :host(:fullscreen) {
-    display: grid; grid-template-columns: 1fr minmax(260px, 340px); grid-template-rows: auto auto 1fr auto; gap: 0 16px;
+    display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
     padding: 16px; box-sizing: border-box; background: var(--primary-background-color, #111); overflow: auto;
   }
-  :host(:fullscreen) .ribbon-wrap, :host(:fullscreen) .hint { grid-column: 1 / -1; }
-  :host(:fullscreen) .canvas { grid-column: 1; grid-row: 3; height: 100%; min-height: 0; }
-  :host(:fullscreen) .statusbar { grid-column: 1; grid-row: 4; }
-  :host(:fullscreen) .panel { grid-column: 2; grid-row: 3; align-self: start; }
+  :host(:fullscreen) .work { grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); grid-template-rows: minmax(0, 1fr) auto; column-gap: 16px; min-height: 0; }
+  :host(:fullscreen) .canvas { grid-column: 1; grid-row: 1; height: 100%; min-height: 0; }
+  :host(:fullscreen) .statusbar { grid-column: 1; grid-row: 2; }
+  :host(:fullscreen) .panel { grid-column: 2; grid-row: 1; align-self: start; max-height: 100%; }
   ${PLAN_CSS}
 `;
 
