@@ -8,7 +8,7 @@
  * License: MIT
  */
 
-const VERSION = "0.9.1";
+const VERSION = "0.9.2";
 
 const STRINGS = {
   en: {
@@ -56,6 +56,9 @@ const STRINGS = {
     panel_text: "Annotation",
     panel_zoom: "Zoom",
     panel_display: "Display",
+    panel_feedback: "Feedback",
+    report_bug: "Report a problem",
+    suggest_feature: "Suggest an idea",
     hint_label: "Click where the text should go, then type it below.",
     text_default: "Text",
     undo: "Undo",
@@ -209,6 +212,9 @@ const STRINGS = {
     panel_text: "Beschriftung",
     panel_zoom: "Zoom",
     panel_display: "Darstellung",
+    panel_feedback: "Feedback",
+    report_bug: "Problem melden",
+    suggest_feature: "Idee vorschlagen",
     hint_label: "Dorthin klicken, wo der Text hin soll, dann unten eintippen.",
     text_default: "Text",
     undo: "Rückgängig",
@@ -325,6 +331,24 @@ const langOf = (hass) => {
 };
 const t = (key, vars = {}, language = "en") =>
   (STRINGS[language]?.[key] ?? STRINGS.en[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+
+// Device and browser in plain words for a bug report, e.g. "HA app on Android" or "Chrome on Windows".
+const deviceInfo = (ua = navigator.userAgent || "") => {
+  const os = /iPhone|iPad|iPod/.test(ua) ? "iOS" : /Android/.test(ua) ? "Android" : /Windows/.test(ua) ? "Windows" : /Mac OS X|Macintosh/.test(ua) ? "macOS" : /Linux/.test(ua) ? "Linux" : "";
+  const app = /Home ?Assistant\//.test(ua) ? "HA app" : /Edg\//.test(ua) ? "Edge" : /Firefox\//.test(ua) ? "Firefox" : /OPR\//.test(ua) ? "Opera" : /Chrome\//.test(ua) ? "Chrome" : /Safari\//.test(ua) ? "Safari" : "";
+  return [app, os].filter(Boolean).join(" on ");
+};
+// Link to a new GitHub issue with the form already filled in where we know the answer (version, HA, device).
+const issueUrl = (kind, hass) => {
+  const q = new URLSearchParams({ template: kind === "bug" ? "bug_report.yml" : "feature_request.yml" });
+  if (kind === "bug") {
+    q.set("version", VERSION);
+    if (hass?.config?.version) q.set("ha", hass.config.version);
+    const device = deviceInfo();
+    if (device) q.set("browser", device);
+  }
+  return `https://github.com/mfurti/floorplan-card/issues/new?${q}`;
+};
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -1099,6 +1123,7 @@ const RIBBON = [
   ["tab_view", [
     ["panel_zoom", [["cmd", "zoom-in", "mdi:magnify-plus-outline", "zoom_in"], ["cmd", "zoom-out", "mdi:magnify-minus-outline", "zoom_out"], ["cmd", "zoom-fit", "mdi:fit-to-screen-outline", "zoom_fit"]]],
     ["panel_display", [["cmd", "fullscreen", "mdi:fullscreen", "fullscreen"]]],
+    ["panel_feedback", [["cmd", "report-bug", "mdi:bug-outline", "report_bug"], ["cmd", "suggest-feature", "mdi:lightbulb-on-outline", "suggest_feature"]]],
   ]],
 ];
 const STAIR_DIRS = [["up", "mdi:arrow-up"], ["down", "mdi:arrow-down"], ["left", "mdi:arrow-left"], ["right", "mdi:arrow-right"]];
@@ -2735,6 +2760,7 @@ class FloorplanCardEditor extends HTMLElement {
       if (document.fullscreenElement) document.exitFullscreen();
       else this._enterFullscreen();
     } else if (cmd === "save") this._save();
+    else if (cmd === "report-bug" || cmd === "suggest-feature") window.open(issueUrl(cmd === "report-bug" ? "bug" : "feature", this._hass), "_blank", "noopener");
     else if (cmd === "zoom-in") this._zoomCenter(0.8);
     else if (cmd === "zoom-out") this._zoomCenter(1.25);
     else if (cmd === "zoom-fit") {

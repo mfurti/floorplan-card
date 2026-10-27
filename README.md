@@ -43,8 +43,8 @@ HACS shows new versions as updates in Home Assistant.
    URL `/local/floorplan-card/floorplan-card.js`, type *JavaScript module*.
 3. Add a card, search for *Floorplan Card* and start drawing.
 
-To update, replace the file and change the resource URL (e.g. `…/floorplan-card.js?v=0.9.1`) so browsers load the
-new version. The browser console shows the running version (`FLOORPLAN-CARD 0.9.1`).
+To update, replace the file and change the resource URL (e.g. `…/floorplan-card.js?v=0.9.2`) so browsers load the
+new version. The browser console shows the running version (`FLOORPLAN-CARD 0.9.2`).
 
 ## Example
 
@@ -216,6 +216,16 @@ trace_image:
   opacity: 0.5             # optional
   show: false              # optional, hides it
 ```
+
+## Feedback
+
+Found a problem or have an idea? The easiest way is right in the editor: open the *View* tab and click
+**Report a problem** or **Suggest an idea**. The form on GitHub opens with the card version, Home Assistant
+version and device already filled in.
+
+Or use these links: [Report a problem](https://github.com/mfurti/floorplan-card/issues/new?template=bug_report.yml) ·
+[Suggest an idea](https://github.com/mfurti/floorplan-card/issues/new?template=feature_request.yml) ·
+[Ask a question](https://github.com/mfurti/floorplan-card/discussions)
 
 ## License
 

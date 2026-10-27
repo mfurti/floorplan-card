@@ -9,6 +9,7 @@ body:
 
         **Only the first field is required.** Everything else is optional, but helps a lot.
         Each field tells you where to find the information – no technical knowledge needed.
+        Fastest way: in the card editor open the tab **View → Report a problem** – versions and device are then filled in for you.
 
         💡 **Quick tip first:** many display problems disappear after reloading without cache
         (PC: `Ctrl + F5`, Mac: `Cmd + Shift + R`, HA app: *Settings → Companion app → Debugging → Reset frontend cache*).
