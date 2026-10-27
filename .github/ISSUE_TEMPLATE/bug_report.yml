@@ -5,12 +5,23 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time! English or German is fine – Deutsch ist auch willkommen.
+        Thanks for reporting! 🙏 English or German is fine – Deutsch ist auch willkommen.
+
+        **Only the first field is required.** Everything else is optional, but helps a lot.
+        Each field tells you where to find the information – no technical knowledge needed.
+
+        💡 **Quick tip first:** many display problems disappear after reloading without cache
+        (PC: `Ctrl + F5`, Mac: `Cmd + Shift + R`, HA app: *Settings → Companion app → Debugging → Reset frontend cache*).
   - type: textarea
     id: what
     attributes:
       label: What happened?
-      description: What did you do, what did you expect, and what happened instead?
+      description: Describe it step by step, like you would explain it to a friend.
+      placeholder: |
+        1. I opened the editor and selected the rectangle tool
+        2. I drew a room in the corner
+        3. I expected: the room snaps to the wall
+        4. Instead: the room jumps to the middle of the plan
     validations:
       required: true
   - type: dropdown
@@ -23,40 +34,46 @@ body:
         - In the editor in full screen
         - Template image (upload, scale, tracing)
         - Somewhere else
-    validations:
-      required: true
+        - Not sure
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or video
+      description: A picture often says more than a long text. Just **drag the file into this field** or paste it with `Ctrl + V`.
   - type: input
     id: version
     attributes:
       label: Card version
-      description: Shown in the browser console as "FLOORPLAN-CARD x.y.z".
-      placeholder: "0.8.0"
-    validations:
-      required: true
+      description: |
+        Where to find it: open **HACS**, search for **floorplan-card** – the version is shown there.
+        Alternatively on a PC: press `F12`, tab "Console", look for the line "FLOORPLAN-CARD x.y.z". Not sure? Just leave it empty.
+      placeholder: "e.g. 0.9.1"
   - type: input
     id: ha
     attributes:
       label: Home Assistant version
-      placeholder: "2026.10.1"
+      description: "Where to find it: **Settings → About** (shown at the top)."
+      placeholder: "e.g. 2026.10.1"
   - type: input
     id: browser
     attributes:
-      label: Browser and device
-      placeholder: "Chrome 141 on Windows, HA app on an Android tablet, ..."
+      label: Device and browser
+      description: What do you use to open Home Assistant?
+      placeholder: "e.g. Chrome on Windows PC, HA app on Android tablet, Safari on iPhone"
   - type: textarea
     id: config
     attributes:
-      label: Card configuration
-      description: The YAML of the card (or the part that matters). Please replace private entity IDs if you like.
+      label: Card configuration (YAML)
+      description: |
+        Where to find it: open the dashboard → **Edit dashboard** → **Edit** on the floor plan card →
+        **Show code editor** → select everything (`Ctrl + A`) and copy it here.
+        Feel free to replace private names or image links.
       render: yaml
   - type: textarea
     id: console
     attributes:
-      label: Errors in the browser console
-      description: Press F12, open "Console" and copy any red lines.
+      label: Errors in the browser console (PC only)
+      description: |
+        Only possible on a PC – on a phone or tablet simply skip this.
+        Press `F12`, open the tab **Console**, reproduce the problem and copy the **red lines** here.
       render: text
-  - type: textarea
-    id: screenshots
-    attributes:
-      label: Screenshots
-      description: A screenshot often says more than a long description.

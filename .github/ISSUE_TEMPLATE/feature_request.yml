@@ -5,22 +5,37 @@ body:
   - type: markdown
     attributes:
       value: |
-        Ideas are very welcome! English or German is fine – Deutsch ist auch willkommen.
-        For open questions or to discuss an idea first, you can also use [Discussions](https://github.com/mfurti/floorplan-card/discussions).
+        Ideas are very welcome! 💡 English or German is fine – Deutsch ist auch willkommen.
+
+        **Only the first field is required.** Write it in your own words – no technical knowledge needed.
+        Not sure yet if it is a good idea? You can also discuss it first in [Discussions](https://github.com/mfurti/floorplan-card/discussions).
   - type: textarea
     id: problem
     attributes:
       label: What would you like to do?
-      description: Describe what you want to show or draw, or what is cumbersome today.
+      description: What do you want to show or draw – or what is cumbersome today?
+      placeholder: |
+        e.g. I would like to see which window is open, directly on the floor plan.
+        Today I have to look it up in a separate card.
     validations:
       required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where should it be?
+      options:
+        - In the card on the dashboard
+        - In the visual editor
+        - Both
+        - Not sure
   - type: textarea
     id: idea
     attributes:
       label: How could it work?
-      description: Your idea for the solution – in the card, in the editor or in the YAML.
+      description: Your idea for the solution, if you already have one. Leave it empty if not.
+      placeholder: "e.g. The window turns red when it is open, and I can pick the sensor in the editor."
   - type: textarea
     id: example
     attributes:
-      label: Example
-      description: A sketch, a screenshot of another card or a few lines of YAML.
+      label: Example picture
+      description: A sketch, a photo of a drawing on paper or a screenshot of something similar. Just **drag the file into this field** or paste it with `Ctrl + V`.
