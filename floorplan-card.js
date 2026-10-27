@@ -1514,10 +1514,32 @@ class FloorplanCardEditor extends HTMLElement {
     setTimeout(() => this._enlargeDialog());
   }
 
-  // Open HA's card editor dialog in its large size (as a click on its title does), once per dialog.
+  // Open HA's card editor dialog in its large size (as a click on its title does), once per dialog,
+  // and let the preview use the whole right half instead of HA's 500 px. HA reuses the dialog for
+  // other cards, so the preview style goes again with the editor.
   _enlargeDialog() {
     const dialog = this._dialog;
     if (dialog && "large" in dialog && !dialog.large) dialog.large = true;
+    this._widenPreview();
+  }
+
+  _widenPreview() {
+    const root = this._dialog?.shadowRoot;
+    if (!root || root.querySelector("style.fp-preview")) return;
+    const style = document.createElement("style");
+    style.className = "fp-preview";
+    style.textContent = ".content > .element-preview hui-card { max-width: none; }";
+    root.appendChild(style);
+    this._previewStyle = style;
+  }
+
+  connectedCallback() {
+    if (this._built) setTimeout(() => this._widenPreview());
+  }
+
+  disconnectedCallback() {
+    this._previewStyle?.remove();
+    this._previewStyle = null;
   }
 
   get _dialog() {
