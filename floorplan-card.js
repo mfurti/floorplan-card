@@ -1,14 +1,14 @@
 /**
- * Floorplan Card for Home Assistant
+ * Floorplan Draw Card for Home Assistant
  * Draws a floor plan from plain coordinates – rooms, windows, doors, radiators and stairs –
  * and colors them by entity state. Comes with a visual editor: draw rooms, drag
  * everything around, no SVG editor or YAML needed.
  *
- * https://github.com/mfurti/floorplan-card
+ * https://github.com/mfurti/floorplan-draw-card
  * License: MIT
  */
 
-const VERSION = "0.10.0";
+const VERSION = "0.10.1";
 
 const STRINGS = {
   en: {
@@ -349,7 +349,7 @@ const issueUrl = (kind, hass) => {
     const device = deviceInfo();
     if (device) q.set("browser", device);
   }
-  return `https://github.com/mfurti/floorplan-card/issues/new?${q}`;
+  return `https://github.com/mfurti/floorplan-draw-card/issues/new?${q}`;
 };
 
 const esc = (s) =>
@@ -3208,10 +3208,10 @@ customElements.define("floorplan-draw-card-editor", FloorplanCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "floorplan-draw-card",
-  name: "Floorplan Card",
+  name: "Floorplan Draw Card",
   description: "Floor plan from coordinates with live windows, doors, radiators and stairs – with a drawing editor.",
   preview: true,
-  documentationURL: "https://github.com/mfurti/floorplan-card",
+  documentationURL: "https://github.com/mfurti/floorplan-draw-card",
 });
 
 console.info(`%c FLOORPLAN-DRAW-CARD %c ${VERSION} `, "color:#fff;background:#03a9f4;font-weight:700", "color:#03a9f4");

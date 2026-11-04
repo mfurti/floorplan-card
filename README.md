@@ -1,10 +1,12 @@
-# Floorplan Card
+# Floorplan Draw Card
 
 A Lovelace card for Home Assistant that draws a floor plan from plain coordinates – rooms, windows, doors,
 radiators and stairs – and colors them by entity state. It comes with a visual editor, so you can draw the
 plan right in the dashboard: no SVG editor, no image, no YAML needed.
 
-![Floorplan Card showing an apartment with rooms, windows, doors, radiators, stairs and live sensor values](https://github.com/user-attachments/assets/620d6d16-221d-41af-91cd-7621b45644a4)
+**In HACS:** search for **Floorplan Draw Card** (Dashboard). In YAML the card type is `custom:floorplan-draw-card`.
+
+![Floorplan Draw Card showing an apartment with rooms, windows, doors, radiators, stairs and live sensor values](https://github.com/user-attachments/assets/620d6d16-221d-41af-91cd-7621b45644a4)
 
 ## Features
 
@@ -26,33 +28,33 @@ Installing with an AI assistant? Point it to [`llms.txt`](llms.txt) – compact 
 
 ### HACS (recommended)
 
-Floorplan Card is in the HACS default catalog.
+Floorplan Draw Card is in the HACS default catalog.
 
-1. Open **HACS** in Home Assistant, search for **Floorplan Card** and download it. Or click the button to open it in
+1. Open **HACS** in Home Assistant, search for **Floorplan Draw Card** and download it. Or click the button to open it in
    HACS directly:
 
-   [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mfurti&repository=floorplan-card&category=plugin)
+   [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mfurti&repository=floorplan-draw-card&category=plugin)
 2. Reload the browser when HACS asks.
-3. Add a card, search for *Floorplan Card* and start drawing.
+3. Add a card, search for *Floorplan Draw Card* and start drawing.
 
 HACS shows new versions as updates in Home Assistant.
 
 ### Manual
 
-1. Download `floorplan-card.js` from the [latest release](https://github.com/mfurti/floorplan-card/releases/latest)
+1. Download `floorplan-card.js` from the [latest release](https://github.com/mfurti/floorplan-draw-card/releases/latest)
    and copy it to `/config/www/floorplan-card/`.
 2. Add it as a dashboard resource: *Settings → Dashboards → ⋮ → Resources*,
    URL `/local/floorplan-card/floorplan-card.js`, type *JavaScript module*.
-3. Add a card, search for *Floorplan Card* and start drawing.
+3. Add a card, search for *Floorplan Draw Card* and start drawing.
 
-To update, replace the file and change the resource URL (e.g. `…/floorplan-card.js?v=0.10.0`) so browsers load the
-new version. The browser console shows the running version (`FLOORPLAN-DRAW-CARD 0.10.0`).
+To update, replace the file and change the resource URL (e.g. `…/floorplan-card.js?v=0.10.1`) so browsers load the
+new version. The browser console shows the running version (`FLOORPLAN-DRAW-CARD 0.10.1`).
 
 ### Upgrading from 0.9.x
 
 Since 0.10.0 the card type is `custom:floorplan-draw-card` (before: `custom:floorplan-card`, which clashed with
 [ha-floorplan](https://github.com/ExperienceLovelace/ha-floorplan)). After updating, change the first line of every
-Floorplan Card in your dashboards: open the card in the editor and switch to the code view, or edit the dashboard's
+Floorplan Draw Card in your dashboards: open the card in the editor and switch to the code view, or edit the dashboard's
 raw configuration (*⋮ → Raw configuration editor*), and replace
 
 ```yaml
@@ -244,9 +246,9 @@ Found a problem or have an idea? The easiest way is right in the editor: open th
 **Report a problem** or **Suggest an idea**. The form on GitHub opens with the card version, Home Assistant
 version and device already filled in.
 
-Or use these links: [Report a problem](https://github.com/mfurti/floorplan-card/issues/new?template=bug_report.yml) ·
-[Suggest an idea](https://github.com/mfurti/floorplan-card/issues/new?template=feature_request.yml) ·
-[Ask a question](https://github.com/mfurti/floorplan-card/discussions)
+Or use these links: [Report a problem](https://github.com/mfurti/floorplan-draw-card/issues/new?template=bug_report.yml) ·
+[Suggest an idea](https://github.com/mfurti/floorplan-draw-card/issues/new?template=feature_request.yml) ·
+[Ask a question](https://github.com/mfurti/floorplan-draw-card/discussions)
 
 ## License
 

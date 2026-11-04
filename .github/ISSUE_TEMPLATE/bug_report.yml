@@ -46,7 +46,7 @@ body:
     attributes:
       label: Card version
       description: |
-        Where to find it: open **HACS**, search for **floorplan-card** – the version is shown there.
+        Where to find it: open **HACS**, search for **Floorplan Draw Card** – the version is shown there.
         Alternatively on a PC: press `F12`, tab "Console", look for the line "FLOORPLAN-CARD x.y.z". Not sure? Just leave it empty.
       placeholder: "e.g. 0.9.1"
   - type: input

@@ -8,7 +8,7 @@ body:
         Ideas are very welcome! 💡 English or German is fine – Deutsch ist auch willkommen.
 
         **Only the first field is required.** Write it in your own words – no technical knowledge needed.
-        Not sure yet if it is a good idea? You can also discuss it first in [Discussions](https://github.com/mfurti/floorplan-card/discussions).
+        Not sure yet if it is a good idea? You can also discuss it first in [Discussions](https://github.com/mfurti/floorplan-draw-card/discussions).
   - type: textarea
     id: problem
     attributes:
