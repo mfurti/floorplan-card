@@ -43,15 +43,34 @@ HACS shows new versions as updates in Home Assistant.
    URL `/local/floorplan-card/floorplan-card.js`, type *JavaScript module*.
 3. Add a card, search for *Floorplan Card* and start drawing.
 
-To update, replace the file and change the resource URL (e.g. `…/floorplan-card.js?v=0.9.3`) so browsers load the
-new version. The browser console shows the running version (`FLOORPLAN-CARD 0.9.3`).
+To update, replace the file and change the resource URL (e.g. `…/floorplan-card.js?v=0.10.0`) so browsers load the
+new version. The browser console shows the running version (`FLOORPLAN-DRAW-CARD 0.10.0`).
+
+### Upgrading from 0.9.x
+
+Since 0.10.0 the card type is `custom:floorplan-draw-card` (before: `custom:floorplan-card`, which clashed with
+[ha-floorplan](https://github.com/ExperienceLovelace/ha-floorplan)). After updating, change the first line of every
+Floorplan Card in your dashboards: open the card in the editor and switch to the code view, or edit the dashboard's
+raw configuration (*⋮ → Raw configuration editor*), and replace
+
+```yaml
+type: custom:floorplan-card
+```
+
+with
+
+```yaml
+type: custom:floorplan-draw-card
+```
+
+The rest of the configuration stays the same.
 
 ## Example
 
 Coordinates can be in any unit (meters, centimeters, pixels of a photo). All keys: [Configuration reference](#configuration-reference).
 
 ```yaml
-type: custom:floorplan-card
+type: custom:floorplan-draw-card
 rooms:
   - name: Living room
     rect: [0, 0, 5, 4]
@@ -85,7 +104,7 @@ right, y grows **down**. A point is `[x, y]`, a box is `[x1, y1, x2, y2]` (two o
 
 | Key | Type | Description |
 | --- | --- | --- |
-| `type` | string | `custom:floorplan-card` |
+| `type` | string | `custom:floorplan-draw-card` |
 | `rooms` | list | **Required**, at least one room. |
 | `windows`, `doors`, `radiators`, `stairs`, `elements`, `labels` | list | Optional, see below. |
 | `title` | string | Card header. |

@@ -1,6 +1,6 @@
 # Floorplan Card
 
-> Lovelace card for Home Assistant (`custom:floorplan-card`) that draws a floor plan from plain coordinates – rooms, windows, doors, radiators, stairs, icons and labels – colored by entity state, with a visual drawing editor. A single JavaScript module (`floorplan-card.js`), no build step and no dependencies.
+> Lovelace card for Home Assistant (`custom:floorplan-draw-card`) that draws a floor plan from plain coordinates – rooms, windows, doors, radiators, stairs, icons and labels – colored by entity state, with a visual drawing editor. A single JavaScript module (`floorplan-card.js`), no build step and no dependencies.
 
 Notes for AI assistants installing or configuring this card:
 
@@ -10,13 +10,14 @@ Notes for AI assistants installing or configuring this card:
   2. Save it as `<config>/www/floorplan-card/floorplan-card.js` (served as `/local/floorplan-card/floorplan-card.js`; a new `www` folder needs a Home Assistant restart once).
   3. Register it as a dashboard resource of type `module` with the URL `/local/floorplan-card/floorplan-card.js?v=<version>`: in the UI under *Settings → Dashboards → ⋮ → Resources*, or over the WebSocket API with `{"type": "lovelace/resources/create", "res_type": "module", "url": "..."}`. If the dashboards run in YAML mode, add it under `lovelace: resources:` in `configuration.yaml` instead.
   4. On updates replace the file and change `?v=` (WebSocket `lovelace/resources/update` with the `resource_id`), otherwise browsers keep the old version.
-- Check: the browser console prints `FLOORPLAN-CARD <version>` when the card is loaded.
+- Check: the browser console prints `FLOORPLAN-DRAW-CARD <version>` when the card is loaded.
+- Card type since 0.10.0: `custom:floorplan-draw-card`. Configs from 0.9.x use `custom:floorplan-card` and must be changed to the new type, everything else stays the same.
 - Configuration: `rooms` is required (at least one room with `rect`, `points` or `ellipse`). Coordinates are plain numbers in one unit, x to the right, y down. Never guess entity or area IDs – look them up in the user's Home Assistant. Users can also draw the plan in the visual editor instead of writing YAML.
 
 Minimal config:
 
 ```yaml
-type: custom:floorplan-card
+type: custom:floorplan-draw-card
 rooms:
   - name: Living room
     rect: [0, 0, 5, 4]

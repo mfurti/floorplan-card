@@ -8,7 +8,7 @@
  * License: MIT
  */
 
-const VERSION = "0.9.3";
+const VERSION = "0.10.0";
 
 const STRINGS = {
   en: {
@@ -765,7 +765,7 @@ const PLAN_CSS = `
 
 class FloorplanCard extends HTMLElement {
   static getConfigElement() {
-    return document.createElement("floorplan-card-editor");
+    return document.createElement("floorplan-draw-card-editor");
   }
 
   static getStubConfig() {
@@ -831,7 +831,7 @@ class FloorplanCard extends HTMLElement {
   // Popup with the devices of a Home Assistant area.
   _openArea(area, title) {
     this._popup?.close();
-    const popup = document.createElement("floorplan-area-popup");
+    const popup = document.createElement("floorplan-draw-area-popup");
     popup.setup(this, area, title, () => this._popup === popup && (this._popup = null));
     popup.hass = this._hass;
     document.body.appendChild(popup);
@@ -3201,17 +3201,17 @@ FloorplanCardEditor.styles = `
   ${PLAN_CSS}
 `;
 
-customElements.define("floorplan-card", FloorplanCard);
-customElements.define("floorplan-area-popup", FloorplanAreaPopup);
-customElements.define("floorplan-card-editor", FloorplanCardEditor);
+customElements.define("floorplan-draw-card", FloorplanCard);
+customElements.define("floorplan-draw-area-popup", FloorplanAreaPopup);
+customElements.define("floorplan-draw-card-editor", FloorplanCardEditor);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: "floorplan-card",
+  type: "floorplan-draw-card",
   name: "Floorplan Card",
   description: "Floor plan from coordinates with live windows, doors, radiators and stairs – with a drawing editor.",
   preview: true,
   documentationURL: "https://github.com/mfurti/floorplan-card",
 });
 
-console.info(`%c FLOORPLAN-CARD %c ${VERSION} `, "color:#fff;background:#03a9f4;font-weight:700", "color:#03a9f4");
+console.info(`%c FLOORPLAN-DRAW-CARD %c ${VERSION} `, "color:#fff;background:#03a9f4;font-weight:700", "color:#03a9f4");
