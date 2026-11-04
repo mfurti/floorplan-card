@@ -26,11 +26,13 @@ Installing with an AI assistant? Point it to [`llms.txt`](llms.txt) – compact 
 
 ### HACS (recommended)
 
-[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mfurti&repository=floorplan-card&category=plugin)
+Floorplan Card is in the HACS default catalog.
 
-1. Click the button above, or in HACS open *⋮ → Custom repositories*, add `https://github.com/mfurti/floorplan-card`
-   with type *Dashboard*.
-2. Download *Floorplan Card* and reload the browser when HACS asks.
+1. Open **HACS** in Home Assistant, search for **Floorplan Card** and download it. Or click the button to open it in
+   HACS directly:
+
+   [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mfurti&repository=floorplan-card&category=plugin)
+2. Reload the browser when HACS asks.
 3. Add a card, search for *Floorplan Card* and start drawing.
 
 HACS shows new versions as updates in Home Assistant.

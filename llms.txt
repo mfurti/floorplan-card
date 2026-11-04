@@ -4,7 +4,7 @@
 
 Notes for AI assistants installing or configuring this card:
 
-- Prefer HACS if the user has it: add `https://github.com/mfurti/floorplan-card` as a custom repository of type *Dashboard*, download *Floorplan Card*, reload the browser. HACS registers the resource and handles updates.
+- Prefer HACS if the user has it: the card is in the HACS default catalog. Search for *Floorplan Card* in HACS, download it, reload the browser. HACS registers the resource and handles updates. No custom repository is needed.
 - Manual install:
   1. Download `floorplan-card.js` from the latest release: https://github.com/mfurti/floorplan-card/releases/latest/download/floorplan-card.js
   2. Save it as `<config>/www/floorplan-card/floorplan-card.js` (served as `/local/floorplan-card/floorplan-card.js`; a new `www` folder needs a Home Assistant restart once).
